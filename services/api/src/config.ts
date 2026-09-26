@@ -25,11 +25,24 @@ const configSchema = z.object({
     .transform(Number).pipe(z.number().int().min(0).max(3)).default(1),
   DATABASE_URL: z.string().refine((value) => {
     try {
-      const url = new URL(value);
-      return ["postgres:", "postgresql:"].includes(url.protocol)
-        && url.hostname.length > 0 && url.pathname.length > 1;
+      // WHATWG URL rejects PostgreSQL's valid hostless socket form (`@/db`).
+      // Insert a validation-only hostname; node-postgres still receives the
+      // original URL and uses the `host=/cloudsql/...` query parameter.
+      const hostlessSocket = /^(postgres(?:ql)?:\/\/[^/?#]*@)\/(?=[^/])/i.test(value);
+      const parsedValue = hostlessSocket
+        ? value.replace(/^(postgres(?:ql)?:\/\/[^/?#]*@)\/(?=[^/])/i, "$1localhost/")
+        : value;
+      const url = new URL(parsedValue);
+      if (!["postgres:", "postgresql:"].includes(url.protocol)) return false;
+
+      const hasDatabase = url.pathname.length > 1;
+      const hasTcpHost = !hostlessSocket && url.hostname.length > 0;
+      const socketHost = url.searchParams.get("host");
+      const hasCloudSqlSocket = socketHost?.startsWith("/cloudsql/") === true;
+
+      return hasDatabase && (hasTcpHost || hasCloudSqlSocket);
     } catch { return false; }
-  }, "Must be a PostgreSQL URL with host and database name").optional(),
+  }, "Must be a PostgreSQL URL with a TCP host or Cloud SQL socket and database name").optional(),
 });
 
 export type Config = z.infer<typeof configSchema>;

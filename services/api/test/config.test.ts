@@ -65,7 +65,15 @@ test("authentication needs a non-placeholder secret; invalid values are not echo
 test("PostgreSQL URLs are accepted and invalid URLs do not disclose credentials", () => {
   const url = "postgresql://localhost/adaptive_labs";
   assert.equal(requireDatabaseUrl(loadConfig({ DATABASE_URL: url })), url);
-  for (const value of ["invalid-private-value", "https://user:private@localhost/db", "postgresql://localhost"]) {
+  const cloudSqlUrl = "postgresql://adaptiveskills:private@/adaptive_labs?host=/cloudsql/intentbridge:asia-south1:adaptiveskills-postgres";
+  assert.equal(requireDatabaseUrl(loadConfig({ DATABASE_URL: cloudSqlUrl })), cloudSqlUrl);
+  for (const value of [
+    "invalid-private-value",
+    "https://user:private@localhost/db",
+    "postgresql://localhost",
+    "postgresql://user:private@/db?host=/tmp/postgres",
+    "postgresql://user:private@/?host=/cloudsql/project:region:instance",
+  ]) {
     assert.throws(() => loadConfig({ DATABASE_URL: value }), (error: unknown) =>
       error instanceof ConfigurationError && error.message.includes("DATABASE_URL")
         && !error.message.includes("private"));
