@@ -1,0 +1,27 @@
+{
+  "expo": {
+    "name": "AdaptiveSkills",
+    "slug": "adaptive-skills",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "cover",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.adaptivelabs.adaptiveskills"
+    },
+    "android": {
+      "package": "com.adaptivelabs.adaptiveskills",
+      "edgeToEdgeEnabled": true
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-document-picker",
+      "expo-localization"
+    ]
+  }
+}

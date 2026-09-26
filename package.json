@@ -1,0 +1,38 @@
+{
+  "name": "adaptive-labs",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "services/*"
+  ],
+  "engines": {
+    "node": ">=22.14.0"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "npm run build && npm run typecheck --workspaces",
+    "test": "npm run build && node --test services/api/dist/test/*.test.js",
+    "start": "node --env-file-if-exists=.env services/api/dist/src/server.js",
+    "db:migrate": "npm run build && node --env-file-if-exists=.env services/api/dist/src/migrate.js",
+    "db:check": "npm run build && node --env-file-if-exists=.env services/api/dist/src/check-database.js",
+    "local:configure": "node scripts/init-local-env.mjs",
+    "test:db": "npm run build && node --env-file-if-exists=.env --test packages/db/test/*.test.mjs",
+    "mobile:start": "node --env-file-if-exists=.env node_modules/expo/bin/cli start apps/mobile",
+    "mobile:android": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/run-android.ps1",
+    "mobile:typecheck": "npm run typecheck --workspace @adaptive-labs/mobile",
+    "mobile:test": "node --experimental-strip-types --test apps/mobile/test/*.test.ts"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.3",
+    "@types/pg": "^8.23.1",
+    "typescript": "5.9.3"
+  },
+  "dependencies": {
+    "expo": "~57.0.24",
+    "react": "19.2.3",
+    "react-native": "0.86.3"
+  }
+}

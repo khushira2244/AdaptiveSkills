@@ -1,0 +1,73 @@
+# Dependencies and compiled JavaScript/TypeScript
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+*.tsbuildinfo
+coverage/
+**/coverage/
+
+# Local environment and secrets (keep the documented template)
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.jks
+*.keystore
+keystore.properties
+google-services.json
+service-account*.json
+
+# Learner uploads and local application state
+.data/
+
+# Expo, Metro and package-manager caches
+.expo/
+**/.expo/
+.expo-cache/
+.expo-export-check/
+**/.expo-export-check/
+.npm-cache/
+.metro-health-check*
+
+# Gradle caches and downloaded build toolchains
+.gradle/
+**/.gradle/
+.gradle-cache/
+.gradle-user-home/
+.gradle-user-home-android/
+.android/
+.android-sdk/
+.android-sdk-build/
+.android-user-home/
+.toolchains/
+
+# Obsolete native project generated at the repository root. The maintained
+# Android application lives under apps/mobile/android.
+/android/
+
+# Android local settings and generated build output
+local.properties
+**/local.properties
+**/build/
+**/.cxx/
+**/.externalNativeBuild/
+*.apk
+*.aab
+
+# Logs and temporary artifacts
+*.log
+*.tmp
+hs_err_pid*
+lifecycle*-test.jar
+
+# Editor and operating-system files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Gradle wrapper JARs are source-controlled build bootstraps.
+!**/gradle/wrapper/gradle-wrapper.jar
