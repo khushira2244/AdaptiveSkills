@@ -22,6 +22,12 @@
       "expo-secure-store",
       "expo-document-picker",
       "expo-localization"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "6dfaa7a5-4f9c-489a-a17c-cdafee1972f6"
+      }
+    },
+    "owner": "adaptive-labs"
   }
 }

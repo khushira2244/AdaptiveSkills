@@ -28,6 +28,8 @@ service-account*.json
 .expo-cache/
 .expo-export-check/
 **/.expo-export-check/
+.eas-appdata/
+.eas-localappdata/
 .npm-cache/
 .metro-health-check*
 
