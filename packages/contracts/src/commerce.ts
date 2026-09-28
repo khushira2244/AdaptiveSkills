@@ -30,6 +30,11 @@ export const purchaseIntentResponseSchema = z.strictObject({
 });
 export const billingStateSchema = z.strictObject({
   trialStatus: trialStatusSchema,
+  access: z.strictObject({
+    type: z.enum(["NONE","INITIAL","CONTINUATION"]),
+    initialEntitlement: z.strictObject({ key:z.string(),status:z.enum(["ACTIVE","INACTIVE","REVOKED","MISSING"]),productId:z.string().nullable(),purchasedAt:z.string().nullable() }),
+    continuationEntitlement: z.strictObject({ key:z.string(),status:z.enum(["ACTIVE","INACTIVE","REVOKED","MISSING"]),productId:z.string().nullable(),purchasedAt:z.string().nullable() }),
+  }),
   purchase: z.strictObject({
     productKey: productKeySchema, productId: z.string(), amount: z.number().nullable(),
     currencyCode: z.string().nullable(), store: z.string().nullable(), status: z.enum(["SUCCEEDED","REVOKED"]),
@@ -39,3 +44,4 @@ export const billingStateSchema = z.strictObject({
 });
 export type HomeState = z.infer<typeof homeStateSchema>;
 export type TrialStatus = z.infer<typeof trialStatusSchema>;
+export type BillingState = z.infer<typeof billingStateSchema>;

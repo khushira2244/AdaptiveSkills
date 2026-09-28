@@ -6,6 +6,7 @@ export const learnerConceptRelationshipSchema=z.enum(["KNOWN_REPORTED","KNOWN_PR
 export const targetPathSchema=z.enum(["FRONTEND_ENGINEER","BACKEND_ENGINEER","FULL_STACK_ENGINEER","AI_APPLICATION_ENGINEER","CLOUD_DEVOPS_ENGINEER"]);
 export const targetDepthSchema=z.enum(["BASIC","STANDARD","DEEP"]);
 export const mapConceptStatusSchema=z.enum(["KNOWN","RECOMMENDED","DEEP"]);
+export const learningRunwayUnitStatusSchema=z.enum(["LOCKED","READY","IN_PROGRESS","DOUBT_CHECKPOINT","COMPLETE"]);
 export const setupContextPutSchema=z.strictObject({
   revision:z.number().int().nonnegative(), jdText:z.string().trim().max(100_000).nullable(),
   targetCompany:z.string().trim().max(200).nullable(), productStyle:z.string().trim().max(300).nullable(),
@@ -28,13 +29,14 @@ export const learningMapConceptSchema=z.strictObject({
   conceptId:z.string(),name:z.string(),shortExample:z.string(),status:mapConceptStatusSchema,
   relationship:learnerConceptRelationshipSchema,recommendationReason:z.string(),selected:z.boolean(),
   depthCategory:z.enum(["FOUNDATION","APPLIED","DEEP"]),requirementClass:requirementClassSchema,
+  prerequisites:z.array(z.strictObject({conceptId:z.string(),name:z.string()})),
 });
 export const learningMapCapabilitySchema=z.strictObject({
   capabilityId:z.string(),name:z.string(),tab:z.string().min(1).max(100),
   reason:z.string(),scenario:z.string(),concepts:z.array(learningMapConceptSchema),
 });
 export const learningUnitSchema=z.strictObject({
-  unitId:z.uuid(),sequence:z.union([z.literal(1),z.literal(2)]),title:z.string(),goal:z.string(),
+  unitId:z.uuid(),sequence:z.number().int().positive(),title:z.string(),goal:z.string(),status:learningRunwayUnitStatusSchema,
   prerequisites:z.array(z.string()),productContext:z.string(),groupingReason:z.string(),
   labOutcomePlaceholder:z.string(),concepts:z.array(z.strictObject({conceptId:z.string(),name:z.string()})),
 });
@@ -48,3 +50,7 @@ export const paidSetupStateSchema=z.strictObject({
   requirements:z.array(targetRequirementSchema),learningMap:z.array(learningMapCapabilitySchema),units:z.array(learningUnitSchema),failureCode:z.string().nullable(),
 });
 export type PaidSetupState=z.infer<typeof paidSetupStateSchema>;
+export type LearningUnit=z.infer<typeof learningUnitSchema>;
+export type UnitTeaching=z.infer<typeof unitTeachingSchema>;
+export type ConceptLesson=z.infer<typeof conceptLessonSchema>;
+export type LessonContentBlock=z.infer<typeof lessonContentBlockSchema>;

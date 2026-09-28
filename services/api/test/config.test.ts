@@ -12,6 +12,7 @@ test("local defaults require no secrets or database", () => {
     OPENAI_MODEL: "gpt-5-mini",
     OPENAI_REASONING_TIMEOUT_MS: 90_000,
     OPENAI_REASONING_MAX_RETRIES: 1,
+    WEB_ORIGINS: ["http://localhost:5173", "http://127.0.0.1:5173"],
   });
 });
 
@@ -22,7 +23,8 @@ test("valid environment configuration is parsed", () => {
     REVENUECAT_ENTITLEMENT_ID: "adaptive_labs_pro", REVENUECAT_OFFERING_ID: "default",
     REVENUECAT_CONTINUATION_OFFERING_ID:"continuation",REVENUECAT_CONTINUATION_PACKAGE_ID:"growth_runway",
     REVENUECAT_CONTINUATION_ENTITLEMENT_ID:"adaptive_labs_growth",REVENUECAT_CONTINUATION_PRODUCT_ID:"adaptive_labs_growth_799",OPENAI_MODEL: "gpt-5-mini",
-    OPENAI_REASONING_TIMEOUT_MS:90_000,OPENAI_REASONING_MAX_RETRIES:1 });
+    OPENAI_REASONING_TIMEOUT_MS:90_000,OPENAI_REASONING_MAX_RETRIES:1,
+    WEB_ORIGINS: ["http://localhost:5173", "http://127.0.0.1:5173"] });
 });
 
 test("OpenAI timeout and retry bounds are validated",()=>{

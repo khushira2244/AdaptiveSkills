@@ -21,4 +21,27 @@ export const continuationStateSchema=z.strictObject({
   nextAction:learningNextActionSchema,nextUnitId:z.uuid().nullable(),nextLabId:z.uuid().nullable(),openDoubts:z.number().int().nonnegative(),
   nextOffer:z.strictObject({commercialProductKey:commercialProductKeySchema,plannedUnits:z.number().int().positive(),plannedLabs:z.number().int().nonnegative(),revenueCatOfferingId:z.string(),revenueCatPackageId:z.string().nullable(),revenueCatProductId:z.string().nullable(),entitlementKey:z.string(),available:z.boolean()}).nullable(),
 });
+export const learningNoteSchema=z.strictObject({noteId:z.uuid(),sourceType:learningSourceTypeSchema,sourceId:z.string().nullable(),unitId:z.uuid().nullable(),conceptId:z.string().nullable(),labId:z.uuid().nullable(),fileId:z.uuid().nullable(),selectedText:z.string().nullable(),body:z.string(),createdAt:z.string(),updatedAt:z.string()});
+export const markedWordSchema=z.strictObject({markedWordId:z.uuid(),sourceType:learningSourceTypeSchema,sourceId:z.string().nullable(),unitId:z.uuid().nullable(),conceptId:z.string().nullable(),labId:z.uuid().nullable(),selectedText:z.string(),simpleMeaning:z.string(),technicalMeaning:z.string(),sourceContext:z.string().nullable(),learnerStatus:markerTypeSchema,createdAt:z.string(),resolvedAt:z.string().nullable()});
+export const learningDoubtSchema=z.strictObject({doubtId:z.uuid(),sourceText:z.string().nullable(),markerType:markerTypeSchema,status:z.enum(["OPEN","PLANNED","DEFERRED"]),resolutionType:resolutionTypeSchema.nullable(),unitId:z.uuid().nullable(),conceptName:z.string().nullable(),unitTitle:z.string().nullable(),context:z.record(z.string(),z.unknown()).nullable()});
 export type ContinuationState=z.infer<typeof continuationStateSchema>;
+export type LearningNote=z.infer<typeof learningNoteSchema>;
+export type MarkedWord=z.infer<typeof markedWordSchema>;
+export type LearningDoubt=z.infer<typeof learningDoubtSchema>;
+export type MarkerType=z.infer<typeof markerTypeSchema>;
+export type LearningSourceType=z.infer<typeof learningSourceTypeSchema>;
+export type LabFileRole="PROVIDED"|"READ_ONLY"|"YOU_BUILD"|"OPTIONAL_REFERENCE"|"TEST";
+export type LabFile={fileId:string;path:string;role:LabFileRole;content:string|null;draft:string|null;version:number|null;savedAt:string|null;humanMeaning:string|null;technicalRole:string|null;inputOutput:string|null;learningPurpose:string|null};
+export type LabRunResult={runId:string;status:"PASSED"|"FAILED"|"ERROR";result:Record<string,unknown>;createdAt:string};
+export type LabSubmissionResult={submissionId:string;completed:boolean;evaluation:{passed?:boolean;assistanceLevel?:string;runCount?:number;[key:string]:unknown};createdAt:string};
+export type LabEvidenceResult={evidenceId:string;conceptId:string|null;conceptName:string|null;assistanceLevel:z.infer<typeof assistanceLevelSchema>;outcome:"DEMONSTRATED"|"PARTIAL"|"NOT_DEMONSTRATED";details:Record<string,unknown>;createdAt:string};
+export type LabCompletion={attemptId:string;attemptStatus:"IN_PROGRESS"|"SUBMITTED"|"COMPLETE";highestAssistanceLevel:string;hintsUsed:number;systemAssistanceUsed:boolean;run:LabRunResult|null;submission:LabSubmissionResult|null;evidence:LabEvidenceResult[]};
+export type LabState={labId:string;unitId:string;title:string;status:"LOCKED"|"READY"|"IN_PROGRESS"|"COMPLETE";context:Record<string,unknown>;attemptId:string|null;hintsUsed:number|null;systemAssistanceUsed:boolean|null;nextAction:z.infer<typeof learningNextActionSchema>;concepts:{conceptId:string;name:string}[];hints:{fileId:string|null;hintNumber:1|2;hint:string;createdAt:string}[];files:LabFile[];completion:LabCompletion|null};
+export type LabSubmitResult={passed:boolean;labId:string;submissionId:string;evaluation:{passed:boolean;assistanceLevel:string;runCount:number};nextAction:z.infer<typeof learningNextActionSchema>};
+export const labWorkSummarySchema=z.strictObject({
+  labId:z.uuid(),unitId:z.uuid(),unitTitle:z.string(),title:z.string(),status:z.enum(["LOCKED","READY","IN_PROGRESS","COMPLETE"]),updatedAt:z.string(),
+  attempt:z.strictObject({attemptId:z.uuid(),status:z.enum(["IN_PROGRESS","SUBMITTED","COMPLETE"]),hintsUsed:z.number().int().nonnegative(),systemAssistanceUsed:z.boolean(),startedAt:z.string(),completedAt:z.string().nullable()}).nullable(),
+  submission:z.strictObject({submissionId:z.uuid(),completed:z.boolean(),evaluation:z.record(z.string(),z.unknown()),createdAt:z.string()}).nullable(),
+  evidence:z.strictObject({demonstrated:z.number().int().nonnegative(),partial:z.number().int().nonnegative(),notDemonstrated:z.number().int().nonnegative()}),
+});
+export type LabWorkSummary=z.infer<typeof labWorkSummarySchema>;

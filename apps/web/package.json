@@ -1,0 +1,26 @@
+{
+  "name": "@adaptive-labs/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --configLoader runner",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test test/*.test.ts",
+    "build": "tsc --noEmit && vite build --configLoader runner",
+    "preview": "vite preview --configLoader runner"
+  },
+  "dependencies": {
+    "@adaptive-labs/contracts": "0.1.0",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-router-dom": "7.9.4"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.0",
+    "@types/react-dom": "~19.2.0",
+    "@vitejs/plugin-react": "5.0.4",
+    "typescript": "~6.0.3",
+    "vite": "7.1.9"
+  }
+}

@@ -5,23 +5,30 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "cover",
-      "backgroundColor": "#ffffff"
-    },
     "ios": {
-      "supportsTablet": false,
-      "bundleIdentifier": "com.adaptivelabs.adaptiveskills"
+      "supportsTablet": true,
+      "requireFullScreen": false,
+      "bundleIdentifier": "com.adaptivelabs.adaptiveskills",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
-      "package": "com.adaptivelabs.adaptiveskills",
-      "edgeToEdgeEnabled": true
+      "package": "com.adaptivelabs.adaptiveskills"
     },
     "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash.png",
+          "resizeMode": "cover",
+          "backgroundColor": "#ffffff"
+        }
+      ],
       "expo-secure-store",
       "expo-document-picker",
-      "expo-localization"
+      "expo-localization",
+      "./plugins/withIosOrientation.cjs"
     ],
     "extra": {
       "eas": {

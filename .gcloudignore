@@ -1,0 +1,42 @@
+# Google Cloud source uploads must be run from this repository root.
+.gcloudignore
+.git
+.git/**
+.env
+.env.*
+!.env.example
+
+# Dependencies and package-manager caches
+node_modules/
+**/node_modules/**
+.npm-cache/
+
+# Gradle, Android SDK, and native build caches
+.gradle*
+**/.gradle/**
+.android*
+.toolchains/
+apps/mobile/android/.gradle/
+apps/mobile/android/.cxx/
+apps/mobile/android/app/.cxx/
+apps/mobile/android/build/
+apps/mobile/android/app/build/
+
+# Expo, EAS, and local runtime state
+.expo/
+.expo-cache/
+**/.expo/**
+**/.expo-cache/**
+.eas-appdata/
+.eas-localappdata/
+.data/
+
+# Generated output and local artifacts
+**/dist/
+**/build/
+artifacts/
+*.apk
+*.aab
+*.log
+*.tmp
+*.jar

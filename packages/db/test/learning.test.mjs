@@ -69,6 +69,8 @@ test("Layer 3 paid setup, scope and exactly two unit definitions",{timeout:12000
   assert.equal(state.status,"TRIAL_SCOPE_PROPOSED");
   const http=state.learningMap.flatMap(x=>x.concepts).find(x=>x.name==="HTTP contracts");
   assert.equal(http.selected,true,"default proposal closes the dependency required by Request validation");
+  const validation=state.learningMap.flatMap(x=>x.concepts).find(x=>x.name==="Request validation");
+  assert.deepEqual(validation.prerequisites.map(x=>x.name),["HTTP contracts"]);
   const relational=state.learningMap.flatMap(x=>x.concepts).find(x=>x.name==="PostgreSQL");
   assert.equal(relational.status,"KNOWN");assert.equal(relational.selected,false);assert.equal(relational.relationship,"KNOWN_REPORTED");
   const deep=state.learningMap.flatMap(x=>x.concepts).find(x=>x.name==="Caching");assert.equal(deep.status,"DEEP");

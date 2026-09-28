@@ -109,15 +109,17 @@ export class RevenueCatWebhookService {
 }
 
 export class BillingHistoryService {
-  constructor(private pool: Database) {}
+  constructor(private pool: Database,private initialEntitlementKey:string,private continuationEntitlementKey:string) {}
   async read(learnerId: string) {
     return withTransaction(this.pool,async client=>{
       const repo=commerceRepository(client); await repo.ensureCustomer(learnerId);
-      const [trial,purchase]=await Promise.all([repo.trial(learnerId),repo.billing(learnerId)]);
+      const [trial,purchase,entitlements]=await Promise.all([repo.trial(learnerId),repo.billing(learnerId),client.query<any>(`SELECT entitlement_key,status,product_id,purchased_at FROM learner_entitlements WHERE learner_id=$1 AND entitlement_key=ANY($2::text[])`,[learnerId,[this.initialEntitlementKey,this.continuationEntitlementKey]])]);
+      const entitlement=(key:string)=>{const row=entitlements.rows.find((value:any)=>value.entitlement_key===key);return{key,status:row?.status??"MISSING",productId:row?.product_id??null,purchasedAt:row?.purchased_at instanceof Date?row.purchased_at.toISOString():row?.purchased_at??null};};
+      const initial=entitlement(this.initialEntitlementKey),continuation=entitlement(this.continuationEntitlementKey);
       return billingStateSchema.parse({ trialStatus:trial.status,purchase:purchase ? {
         ...purchase,amount:purchase.amount ?? null,currencyCode:purchase.currencyCode ?? null,store:purchase.store ?? null,
         purchasedAt:purchase.purchasedAt instanceof Date ? purchase.purchasedAt.toISOString() : purchase.purchasedAt ?? null,
-      }:null,message:"This is a one-time purchase, not a recurring subscription." });
+      }:null,access:{type:continuation.status==="ACTIVE"?"CONTINUATION":initial.status==="ACTIVE"?"INITIAL":"NONE",initialEntitlement:initial,continuationEntitlement:continuation},message:"This is a one-time purchase, not a recurring subscription." });
     });
   }
 }

@@ -11,6 +11,7 @@ function owner(request:FastifyRequest){if(!request.identity)throw new HttpError(
 function parse<T>(schema:z.ZodType<T>,body:unknown){const result=schema.safeParse(body);if(!result.success)throw new HttpError(400,"INVALID_INPUT","Invalid request fields: "+result.error.issues.map(x=>x.path.join(".")||"body").join(", "));return result.data;}
 export async function registerContinuationRoutes(app:FastifyInstance,pool:Database,reasoning:LearningReasoningProvider|null,commerce:{offeringId:string;packageId:string;entitlementKey:string;productId:string;secretApiKey?:string;projectId?:string}){const service=new ContinuationService(pool,reasoning,commerce);const revenueCat=new RevenueCatCustomerService(pool,commerce.entitlementKey,commerce.secretApiKey,commerce.projectId);
   app.get("/me/learning-continuation",request=>service.state(owner(request)));
+  app.get("/me/labs",request=>service.listLabs(owner(request)));
   app.post("/me/learning-notes",request=>service.addNote(owner(request),parse(noteCreateSchema,request.body)));
   app.get("/me/learning-notes",request=>service.listNotes(owner(request),String((request.query as {q?:string}).q??"")));
   app.post("/me/learning-markers",request=>service.addMarker(owner(request),parse(markerCreateSchema,request.body)));

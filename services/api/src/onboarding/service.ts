@@ -22,16 +22,17 @@ export class OnboardingStateService {
     });
   }
   async mutate(learnerId: string, version: number, write: (client: Transaction, state: OnboardingState) => Promise<void>,
-    nextStep?: OnboardingState["currentStep"], complete = false) {
+    nextStep?: OnboardingState["currentStep"], complete = false, allowCompleted = false) {
     return withTransaction(this.pool, async client => {
       const repo = onboardingRepository(client);
       const locked = await repo.lock(learnerId,true);
       if (!locked) throw new HttpError(404,"NOT_FOUND","Learner setup not found");
       if (locked.version !== version) throw new HttpError(409,"STALE_VERSION","Reload onboarding before saving");
-      if (locked.completed) throw new HttpError(409,"ONBOARDING_COMPLETE","Onboarding is already complete");
+      if (locked.completed && !allowCompleted) throw new HttpError(409,"ONBOARDING_COMPLETE","Onboarding is already complete");
       const state = await repo.snapshot(learnerId);
       await write(client,state);
-      await repo.touch(learnerId,nextStep,complete);
+      if(locked.completed) await client.query("UPDATE onboarding_states SET version=version+1,updated_at=now() WHERE learner_id=$1",[learnerId]);
+      else await repo.touch(learnerId,nextStep,complete);
       return onboardingStateSchema.parse(await repo.snapshot(learnerId));
     });
   }
@@ -55,7 +56,7 @@ export class OnboardingStateService {
 export class LearnerProfileService {
   constructor(private state: OnboardingStateService) {}
   save(id: string, version: number, profile: Partial<Profile>) {
-    return this.state.mutate(id,version,async client => onboardingRepository(client).profile(id,profile));
+    return this.state.mutate(id,version,async client => onboardingRepository(client).profile(id,profile),undefined,false,true);
   }
 }
 export class SkillProfileService {
@@ -79,6 +80,6 @@ export class InterestService {
 export class LearningPreferenceService {
   constructor(private state: OnboardingStateService) {}
   save(id: string, version: number, preferences: Preferences) {
-    return this.state.mutate(id,version,async client => onboardingRepository(client).preferences(id,preferences));
+    return this.state.mutate(id,version,async client => onboardingRepository(client).preferences(id,preferences),undefined,false,true);
   }
 }

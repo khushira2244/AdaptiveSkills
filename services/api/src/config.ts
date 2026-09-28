@@ -6,6 +6,9 @@ const configSchema = z.object({
   PORT: z.string().regex(/^\d+$/, "Must be a decimal port number")
     .transform(Number).pipe(z.number().int().min(1).max(65535)).default(3000),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
+  WEB_ORIGINS: z.string().trim().default("http://localhost:5173,http://127.0.0.1:5173")
+    .transform(value => value.split(",").map(origin => origin.trim()).filter(Boolean))
+    .pipe(z.array(z.url()).max(20)),
   AUTH_SECRET: z.string().min(32).max(512).refine(v => !v.startsWith("REPLACE_"), "Replace the AUTH_SECRET placeholder").optional(),
   RESUME_STORAGE_DIR: z.string().min(1).optional(),
   REVENUECAT_WEBHOOK_AUTH_TOKEN: z.string().min(16).max(512).optional(),

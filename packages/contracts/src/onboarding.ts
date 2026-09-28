@@ -66,3 +66,4 @@ export type Skill = z.infer<typeof skillSchema>;
 export type Profile = z.infer<typeof profileSchema>;
 export type Goal = z.infer<typeof goalSchema>;
 export type Preferences = z.infer<typeof preferencesSchema>;
+export type Session = z.infer<typeof sessionSchema>;

@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import Fastify from "fastify";
+import cors from "@fastify/cors";
 import { createDatabase } from "@adaptive-labs/db";
 import { requireAuthSecret, type Config } from "./config.js";
 import { registerLearnerRoutes } from "./onboarding/routes.js";
@@ -14,6 +15,13 @@ export function createApp(config: Config,dependencies:{learningReasoning?:Learni
     // Generate our own IDs; untrusted client headers cannot control log correlation.
     requestIdHeader: false,
     genReqId: () => randomUUID(),
+  });
+  app.register(cors, {
+    origin: config.WEB_ORIGINS,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Authorization", "Content-Type"],
+    exposedHeaders: ["x-request-id"],
+    maxAge: 86400,
   });
   if (config.DATABASE_URL) {
     const secret = requireAuthSecret(config);

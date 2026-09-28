@@ -17,6 +17,18 @@ test("health succeeds, matches the shared contract, and does not listen", async 
   assert.equal(app.server.listening, false);
 });
 
+test("browser CORS allows configured origins without changing API responses", async (t) => {
+  const app = createApp(loadConfig({ NODE_ENV: "test", LOG_LEVEL: "silent", WEB_ORIGINS: "https://adaptive.example" }));
+  t.after(() => app.close());
+  const allowed = await app.inject({ method: "OPTIONS", url: "/health", headers: { origin: "https://adaptive.example", "access-control-request-method": "GET" } });
+  assert.equal(allowed.statusCode, 204);
+  assert.equal(allowed.headers["access-control-allow-origin"], "https://adaptive.example");
+
+  const blocked = await app.inject({ method: "GET", url: "/health", headers: { origin: "https://untrusted.example" } });
+  assert.equal(blocked.statusCode, 200);
+  assert.equal(blocked.headers["access-control-allow-origin"], undefined);
+});
+
 test("unknown routes return a stable error with correlated request ID", async (t) => {
   const app = createApp(config);
   t.after(() => app.close());

@@ -41,7 +41,7 @@ export async function registerLearnerRoutes(app: FastifyInstance, pool: Database
   const preferences=new LearningPreferenceService(state), resume=new ResumeIntakeService(state,pool,commerceConfig.learningReasoning,storage);
   const home=new HomeStateService(pool,commerceConfig.entitlementKey,commerceConfig.offeringId);
   const purchases=new PurchaseStateService(pool,commerceConfig.entitlementKey);
-  const billing=new BillingHistoryService(pool);
+  const billing=new BillingHistoryService(pool,commerceConfig.entitlementKey,commerceConfig.continuation.entitlementKey);
   const webhooks=new RevenueCatWebhookService(pool,commerceConfig.entitlementKey,commerceConfig.continuation.entitlementKey,commerceConfig.continuation.productId);
   const revenueCatCustomers=new RevenueCatCustomerService(pool,commerceConfig.entitlementKey,
     commerceConfig.secretApiKey,commerceConfig.projectId);

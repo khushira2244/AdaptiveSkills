@@ -11,6 +11,7 @@ coverage/
 .env
 .env.*
 !.env.example
+!apps/web/.env.production
 *.pem
 *.p12
 *.jks
@@ -59,6 +60,8 @@ local.properties
 *.aab
 
 # Logs and temporary artifacts
+artifacts/
+apps/mobile/ios/
 *.log
 *.tmp
 hs_err_pid*

@@ -1,12 +1,14 @@
 import { homeLabForUnit } from "./learning-navigation";
 import { Pressable } from "./PointerPressable";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Alert, ActivityIndicator, Animated, BackHandler, Image, KeyboardAvoidingView, Modal, PanResponder, Platform, StyleSheet, Text, View } from "react-native";
+import { Alert, ActivityIndicator, Animated, BackHandler, Image, Modal, PanResponder, ScrollView, StyleSheet, Text, View } from "react-native";
 import type { View as ViewType } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { StatusBar } from "expo-status-bar";
 import * as DocumentPicker from "expo-document-picker";
 import { File, Paths } from "expo-file-system";
 import { getLocales } from "expo-localization";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { api, ApiError, API_URL } from "./api";
 import { sessionStore } from "./session";
 import { loadRevenueCatOffer, purchaseRevenueCatPackage, restoreRevenueCatPurchases, revenueCatFailure, type StoreOffer } from "./revenuecat";
@@ -28,6 +30,10 @@ function stepView(step: Step): ViewStep {
 }
 
 export default function App() {
+  return <SafeAreaProvider><StatusBar style="dark"/><AppContent/></SafeAreaProvider>;
+}
+
+function AppContent() {
   const [route, setRoute] = useState<Route>("splash");
   const [token, setToken] = useState<string | null>(null);
   const [state, setState] = useState<OnboardingState | null>(null);
@@ -184,7 +190,7 @@ function Auth({ onAuthenticated, onBack }: { onAuthenticated: (token: string) =>
     catch (e) { setError(message(e)); }
     finally { setBusy(false); }
   }
-  return <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}><Screen>
+  return <Screen>
     <Pressable onPress={onBack} style={ui.backTop}><Text style={ui.backTopText}>‹</Text></Pressable><Brand />
     <View style={{ marginTop: 22 }}><Heading title={mode === "signup" ? "Create your account" : "Welcome back"} subtitle="Your progress stays synced across every session." /></View>
     <Field label="Email" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" placeholder="you@example.com" />
@@ -192,7 +198,7 @@ function Auth({ onAuthenticated, onBack }: { onAuthenticated: (token: string) =>
     {error ? <Notice tone="red">{error}</Notice> : null}<PrimaryButton label={mode === "signup" ? "Create account" : "Sign in"} onPress={() => void submit()} busy={busy} />
     <Pressable onPress={() => { setMode(mode === "signup" ? "login" : "signup"); setError(""); }}><Text style={local.authSwitch}>{mode === "signup" ? "Already have an account? Sign in" : "New here? Create an account"}</Text></Pressable>
     <Text style={local.endpoint}>Local API: {API_URL}</Text>
-  </Screen></KeyboardAvoidingView>;
+  </Screen>;
 }
 
 function Onboarding({ token, initial, onBack, onState, onComplete }: { token: string; initial: OnboardingState; onBack: () => void; onState: (s: OnboardingState) => void; onComplete: (s: OnboardingState) => void }) {
@@ -564,7 +570,7 @@ function PaidHome({ token, state, home, onContinue, onOpenUnit, onOpenLab, onBil
   const openCurrent=()=>{if(["REVIEW_NEXT_RUNWAY","VIEW_NEXT_RUNWAY","WAIT_REFRESH"].includes(activeAction))onContinue();else if(labAction&&continuation?.nextLabId)onOpenLab(continuation.nextLabId);else if(currentUnit)onOpenUnit(currentUnit);else onContinue();};
   const visibleUnits=pathExpanded?units:(currentUnit?[currentUnit]:units.slice(0,1));
   async function openNotes(){setDrawerPage("notes");setNotesLoading(true);try{setSavedNotes(await api.notes(token));}finally{setNotesLoading(false);}}
-  return <View style={local.homeRoot}><Screen>
+  return <View style={local.homeRoot}><Screen footer={<View style={local.tabBar}><Tab icon="⌂" label="Home" active/><Tab icon="▤" label="Learn"/><Tab icon="▣" label="My Work"/><Tab icon="♙" label="You"/></View>}>
     <View style={local.homeHeader}><Pressable accessibilityLabel="Open menu" onPress={()=>{setDrawerPage("menu");setDrawerOpen(true);}}><Text style={local.headerIcon}>☰</Text></Pressable><Brand compact /><Pressable accessibilityLabel="Notifications" onPress={()=>Alert.alert("Notifications","You have no new notifications.")}><Text style={local.notificationIcon}>🔔</Text><View style={local.notificationDot}/></Pressable></View>
     <View style={local.paidGreeting}><View style={{ flex: 1 }}><View style={local.unlockedPill}><Text style={local.unlockedText}>●  {learningReady?"Trial active":"Trial unlocked"}</Text></View><Text style={[local.greeting,{marginTop:10}]}>Welcome back, {state.profile.displayName || "learner"} 👋</Text><Text style={local.greetingSub}>{learningReady?"Ready to keep learning?":`Aspiring ${state.profile.currentRole || "Learner"}`}</Text></View><Text style={local.personAvatar}>{learningReady?"🙋🏻‍♀️":"👩🏻"}</Text></View>
     {unitsLoading?<View style={local.homeLoading}><ActivityIndicator color={C.blue}/><Text style={local.greetingSub}>Loading your saved learning path…</Text></View>:learningReady?<>
@@ -584,15 +590,16 @@ function PaidHome({ token, state, home, onContinue, onOpenUnit, onOpenLab, onBil
       ].map(([title,detail,done])=><SetupRow key={String(title)} title={String(title)} detail={String(detail)} done={Boolean(done)}/>)}</View>
       <LinearGradient colors={["#F7F7FF", "#F0F4FF"]} style={local.nextCard}><View style={local.setupHeading}><View><Text style={local.setupTitle}>What happens next</Text><Text style={local.greetingSub}>We’ll generate exactly two focused learning units from your confirmed scope.</Text></View><Text style={local.forYou}>✦ Just for you</Text></View><PreviewRow icon="▤" title="Your focused learning units" detail="They’ll appear here after your learning scope is confirmed and generation is complete."/><PreviewRow icon="♜" title="2 practical labs included" detail="Hands-on projects to apply what you learn."/></LinearGradient>
     </>}
-  </Screen><View style={local.tabBar}><Tab icon="⌂" label="Home" active/><Tab icon="▤" label="Learn"/><Tab icon="▣" label="My Work"/><Tab icon="♙" label="You"/></View>
+  </Screen>
     <HomeDrawer visible={drawerOpen} page={drawerPage} state={state} notes={savedNotes} notesLoading={notesLoading} onPage={setDrawerPage} onClose={()=>setDrawerOpen(false)} onBack={()=>setDrawerPage("menu")} onNotes={()=>void openNotes()} onBilling={()=>{setDrawerOpen(false);onBilling();}} onLogout={()=>{setDrawerOpen(false);onLogout();}}/>
   </View>;
 }
 
 function HomeDrawer({visible,page,state,notes,notesLoading,onPage,onClose,onBack,onNotes,onBilling,onLogout}:{visible:boolean;page:"menu"|"notes"|"help"|"settings";state:OnboardingState;notes:import("./types").LearningNote[];notesLoading:boolean;onPage:(page:"menu"|"notes"|"help"|"settings")=>void;onClose:()=>void;onBack:()=>void;onNotes:()=>void;onBilling:()=>void;onLogout:()=>void}){
   return <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}><View style={local.drawerOverlay}>
-    <Pressable style={local.drawerDismiss} onPress={onClose}/><View style={local.drawer}>
+    <Pressable style={local.drawerDismiss} onPress={onClose}/><SafeAreaView edges={["top","bottom","left"]} style={local.drawer}>
       <View style={local.drawerHeader}>{page!=="menu"?<Pressable onPress={onBack}><Text style={local.drawerClose}>←</Text></Pressable>:<Brand compact/>}<Pressable accessibilityLabel="Close menu" onPress={onClose}><Text style={local.drawerClose}>×</Text></Pressable></View>
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={local.drawerScroll}>
       {page==="notes"?<><Text style={local.drawerTitle}>Saved Notes</Text>{notesLoading?<ActivityIndicator color={C.blue}/>:notes.length?<View>{notes.map(note=><View key={note.noteId} style={local.drawerNote}><Text style={local.drawerItemTitle}>{note.selectedText||"Learning note"}</Text><Text numberOfLines={4} style={local.drawerItemDetail}>{note.body}</Text></View>)}</View>:<View style={local.emptyNotes}><Text style={local.emptyNotesIcon}>▤</Text><Text style={local.drawerItemTitle}>No saved notes yet</Text><Text style={local.drawerItemDetail}>Select teaching text and choose Add note. Your notes will appear here.</Text></View>}</>:null}
       {page==="help"?<><Text style={local.drawerTitle}>Help & Support</Text><DrawerPanelRow icon="▤" title="Frequently Asked Questions" detail="Quick answers to common account, learning and lab questions."/><DrawerPanelRow icon="!" title="Report an issue" detail="Tell us when something is not working as expected."/><DrawerPanelRow icon="□" title="Contact Support" detail="Get in touch with the AdaptiveSkills team."/><DrawerPanelRow icon="?" title="Learning Guidance" detail="Tips for getting the most from concepts and labs."/></>:null}
       {page==="settings"?<><Text style={local.drawerTitle}>Settings</Text><DrawerPanelRow icon="☼" title="Appearance" detail="Light mode"/><DrawerPanelRow icon="🔔" title="Notifications" detail="Manage learning reminders."/><DrawerPanelRow icon="◎" title="Language" detail="English (US)"/><DrawerPanelRow icon="◇" title="Privacy" detail="Control your data and privacy settings."/><DrawerPanelRow icon="♙" title="Account" detail="Manage your account details."/></>:null}
@@ -601,7 +608,8 @@ function HomeDrawer({visible,page,state,notes,notesLoading,onPage,onClose,onBack
         <View style={local.drawerDivider}/><DrawerItem icon="▤" title="Saved Notes" onPress={onNotes}/><DrawerItem icon="?" title="Help & Support" onPress={()=>onPage("help")}/><DrawerItem icon="⚙" title="Settings" onPress={()=>onPage("settings")}/><DrawerItem icon="▣" title="Billing" onPress={onBilling}/><View style={local.drawerDivider}/><DrawerItem icon="↪" title="Sign out" onPress={onLogout}/>
         <View style={local.drawerBrandMessage}><Text style={local.drawerBrandMark}>A</Text><Text style={local.drawerBrandText}>Smarter learning, brighter tomorrows.</Text></View>
       </>:null}
-    </View>
+      </ScrollView>
+    </SafeAreaView>
   </View></Modal>;
 
 }
@@ -673,5 +681,5 @@ const local = StyleSheet.create({
   homeLoading: { minHeight: 220, alignItems: "center", justifyContent: "center", gap: 10 }, activeNextCard: { borderWidth: 1, borderColor: "#DCE8F8", borderRadius: 18, padding: 16, marginBottom: 13, backgroundColor: "#F8FBFF" }, activeTitleRow: { flexDirection: "row", alignItems: "center", marginBottom: 14 }, rocketCircle: { width: 46, height: 46, borderRadius: 23, backgroundColor: "#E7F1FF", alignItems: "center", justifyContent: "center", marginRight: 11 }, rocket: { fontSize: 22 }, activeTitle: { color: C.ink, fontSize: 18, fontWeight: "900" }, activeCopy: { color: C.muted, fontSize: 11, lineHeight: 16, marginTop: 3 }, unitChoiceGrid: { flexDirection: "row", gap: 9 }, unitChoice: { flex: 1, minHeight: 156, borderWidth: 1, borderColor: "#C9DCF8", borderRadius: 13, padding: 12, backgroundColor: "white" }, unitChoiceIcon: { color: C.blue, fontSize: 24, marginBottom: 8 }, unitChoiceTitle: { color: C.ink, fontSize: 14, fontWeight: "900" }, unitChoiceName: { color: C.muted, fontSize: 10, lineHeight: 14, marginTop: 4, minHeight: 30 }, unitChoiceButton: { minHeight: 36, borderRadius: 9, backgroundColor: "#E4EEFF", alignItems: "center", justifyContent: "center", marginTop: 10 }, unitChoiceButtonText: { color: C.blue, fontSize: 10, fontWeight: "800" }, learningStatusCard: { borderWidth: 1, borderColor: C.line, borderRadius: 17, padding: 16, marginBottom: 12 }, learningUnitRow: { flexDirection: "row", alignItems: "center", paddingVertical: 11, borderTopWidth: 1, borderTopColor: "#EDF1F6" }, learningUnitNumber: { width: 34, height: 34, borderRadius: 17, backgroundColor: "#E8F1FF", alignItems: "center", justifyContent: "center", marginRight: 10 }, learningUnitNumberText: { color: C.blue, fontWeight: "900" }, learningMeta: { color: C.blue, fontSize: 9, fontWeight: "700", marginTop: 5 }, learningChevron: { color: C.blue, fontSize: 24, marginLeft: 6 }, whatsNextCard: { borderWidth: 1, borderColor: C.line, borderRadius: 17, padding: 16, marginBottom: 8, backgroundColor: "#FBFCFF" },
   billingTitle: { color: C.ink, fontSize: 21, fontWeight: "900", marginVertical: 20 }, billingPlan: { borderWidth: 1, borderColor: C.line, borderRadius: 14, padding: 14, flexDirection: "row", alignItems: "center" }, billingBag: { width: 44, height: 44, borderRadius: 12, backgroundColor: "#E7F1FF", alignItems: "center", justifyContent: "center", marginRight: 11 }, billingPrice: { color: C.ink, fontWeight: "900", fontSize: 18 }, activePill: { color: "#148353", backgroundColor: "#DCF8E9", borderRadius: 10, paddingHorizontal: 8, paddingVertical: 4, fontSize: 10, marginTop: 5, fontWeight: "800" }, includedCard: { borderWidth: 1, borderColor: C.line, borderRadius: 14, padding: 14, marginTop: 8 }, historyTitle: { color: C.ink, fontWeight: "900", fontSize: 15, marginTop: 18, marginBottom: 8 }, historyRow: { flexDirection: "row", alignItems: "center", gap: 8, borderWidth: 1, borderColor: C.line, borderRadius: 12, padding: 12 }, historyIcon: { color: C.blue, fontSize: 20 }, paidPill: { color: "#148353", backgroundColor: "#DCF8E9", borderRadius: 9, paddingHorizontal: 7, paddingVertical: 4, fontSize: 9, fontWeight: "800" },
   tabBar: { height: 68, borderTopWidth: 1, borderTopColor: "#E8EDF4", backgroundColor: "white", flexDirection: "row", paddingBottom: 5 }, tab: { flex: 1, alignItems: "center", justifyContent: "center" }, tabIcon: { color: C.muted, fontSize: 22 }, tabLabel: { color: C.muted, fontSize: 10, marginTop: 3 },
-  drawerOverlay:{flex:1,backgroundColor:"rgba(7,21,48,.42)"},drawer:{position:"absolute",left:0,top:0,bottom:0,width:"82%",maxWidth:340,backgroundColor:"white",paddingHorizontal:20,paddingTop:28,paddingBottom:22,zIndex:2,elevation:12},drawerDismiss:{flex:1},drawerHeader:{minHeight:54,flexDirection:"row",alignItems:"center",justifyContent:"space-between"},drawerClose:{fontSize:28,color:C.ink,fontWeight:"500",padding:8},drawerProfile:{flexDirection:"row",alignItems:"center",paddingVertical:20},drawerAvatar:{fontSize:45,marginRight:12},drawerName:{color:C.ink,fontSize:17,fontWeight:"900"},drawerRole:{color:C.muted,fontSize:11,marginTop:4},drawerDivider:{height:1,backgroundColor:"#E8EDF4",marginVertical:8},drawerItem:{minHeight:52,flexDirection:"row",alignItems:"center"},drawerItemIcon:{width:34,color:C.blue,fontSize:18,textAlign:"center",marginRight:8},drawerItemTitle:{flex:1,color:C.ink,fontSize:14,fontWeight:"800"},drawerItemDetail:{color:C.muted,fontSize:12,lineHeight:17,marginTop:5},drawerChevron:{color:C.muted,fontSize:22},drawerPanelRow:{minHeight:74,borderWidth:1,borderColor:C.line,borderRadius:12,padding:12,marginBottom:9,flexDirection:"row",alignItems:"center"},drawerPanelIcon:{width:36,height:36,borderRadius:10,backgroundColor:"#EEF5FF",color:C.blue,textAlign:"center",lineHeight:36,fontSize:18,fontWeight:"900",marginRight:10},drawerBrandMessage:{marginTop:"auto",borderRadius:13,backgroundColor:"#EEF5FF",padding:13,flexDirection:"row",alignItems:"center"},drawerBrandMark:{width:34,height:34,borderRadius:10,backgroundColor:C.blue,color:"white",textAlign:"center",lineHeight:34,fontSize:19,fontWeight:"900",marginRight:10},drawerBrandText:{flex:1,color:C.blue,fontSize:11,lineHeight:15,fontWeight:"700"},drawerTitle:{color:C.ink,fontWeight:"900",fontSize:22,marginVertical:18},drawerNote:{borderWidth:1,borderColor:C.line,borderRadius:11,padding:12,marginBottom:9},emptyNotes:{alignItems:"center",justifyContent:"center",paddingVertical:55,paddingHorizontal:16},emptyNotesIcon:{fontSize:34,color:C.blue,marginBottom:13},
+  drawerOverlay:{flex:1,backgroundColor:"rgba(7,21,48,.42)"},drawer:{position:"absolute",left:0,top:0,bottom:0,width:"82%",maxWidth:340,backgroundColor:"white",paddingHorizontal:20,paddingTop:12,paddingBottom:12,zIndex:2,elevation:12},drawerDismiss:{flex:1},drawerScroll:{flexGrow:1},drawerHeader:{minHeight:54,flexDirection:"row",alignItems:"center",justifyContent:"space-between"},drawerClose:{fontSize:28,color:C.ink,fontWeight:"500",padding:8},drawerProfile:{flexDirection:"row",alignItems:"center",paddingVertical:20},drawerAvatar:{fontSize:45,marginRight:12},drawerName:{color:C.ink,fontSize:17,fontWeight:"900"},drawerRole:{color:C.muted,fontSize:11,marginTop:4},drawerDivider:{height:1,backgroundColor:"#E8EDF4",marginVertical:8},drawerItem:{minHeight:52,flexDirection:"row",alignItems:"center"},drawerItemIcon:{width:34,color:C.blue,fontSize:18,textAlign:"center",marginRight:8},drawerItemTitle:{flex:1,color:C.ink,fontSize:14,fontWeight:"800"},drawerItemDetail:{color:C.muted,fontSize:12,lineHeight:17,marginTop:5},drawerChevron:{color:C.muted,fontSize:22},drawerPanelRow:{minHeight:74,borderWidth:1,borderColor:C.line,borderRadius:12,padding:12,marginBottom:9,flexDirection:"row",alignItems:"center"},drawerPanelIcon:{width:36,height:36,borderRadius:10,backgroundColor:"#EEF5FF",color:C.blue,textAlign:"center",lineHeight:36,fontSize:18,fontWeight:"900",marginRight:10},drawerBrandMessage:{marginTop:"auto",borderRadius:13,backgroundColor:"#EEF5FF",padding:13,flexDirection:"row",alignItems:"center"},drawerBrandMark:{width:34,height:34,borderRadius:10,backgroundColor:C.blue,color:"white",textAlign:"center",lineHeight:34,fontSize:19,fontWeight:"900",marginRight:10},drawerBrandText:{flex:1,color:C.blue,fontSize:11,lineHeight:15,fontWeight:"700"},drawerTitle:{color:C.ink,fontWeight:"900",fontSize:22,marginVertical:18},drawerNote:{borderWidth:1,borderColor:C.line,borderRadius:11,padding:12,marginBottom:9},emptyNotes:{alignItems:"center",justifyContent:"center",paddingVertical:55,paddingHorizontal:16},emptyNotesIcon:{fontSize:34,color:C.blue,marginBottom:13},
 });

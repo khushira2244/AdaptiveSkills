@@ -1,5 +1,5 @@
 import type { FastifyInstance,FastifyRequest } from "fastify";
-import { setupContextPutSchema,setupRevisionSchema,learningScopePutSchema,jdDocumentUploadSchema,jdDocumentTextSchema,lessonProgressPutSchema,unitTeachingSchema } from "@adaptive-labs/contracts";
+import { setupContextPutSchema,setupRevisionSchema,learningScopePutSchema,jdDocumentUploadSchema,jdDocumentTextSchema,lessonProgressPutSchema,unitTeachingSchema,learningUnitSchema } from "@adaptive-labs/contracts";
 import type { Database } from "@adaptive-labs/db";
 import type { ZodType } from "zod";
 import { HttpError } from "../http-error.js";
@@ -24,7 +24,7 @@ export async function registerLearningRoutes(app:FastifyInstance,pool:Database,e
   app.put("/me/learning-scope",async request=>{const x=parsed(learningScopePutSchema,request.body);return service.select(owner(request),x.revision,x.items);});
   app.post("/me/learning-scope/confirm",async request=>{const x=parsed(setupRevisionSchema,request.body);return service.confirm(owner(request),x.revision);});
   app.post("/me/learning-units/generate",async request=>{const x=parsed(setupRevisionSchema,request.body);return service.generate(owner(request),x.revision);});
-  app.get("/me/learning-units",async request=>(await service.read(owner(request))).units);
+  app.get("/me/learning-units",async request=>learningUnitSchema.array().parse(await service.readLearningUnits(owner(request))));
   app.post("/me/learning-units/:unitId/teaching/open",async request=>unitTeachingSchema.parse(await service.openUnitTeaching(owner(request),(request.params as {unitId:string}).unitId)));
   app.get("/me/learning-units/:unitId/teaching",async request=>{const value=await service.readUnitTeaching(owner(request),(request.params as {unitId:string}).unitId);if(!value)throw new HttpError(404,"TEACHING_NOT_GENERATED","Open this unit to generate its teaching content");return unitTeachingSchema.parse(value);});
   app.put("/me/concept-lessons/:lessonId/progress",async request=>service.saveLessonProgress(owner(request),(request.params as {lessonId:string}).lessonId,parsed(lessonProgressPutSchema,request.body)));
