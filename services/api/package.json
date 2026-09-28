@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc -b",
+    "build": "npm --prefix ../.. run build:shared && npm run build:only",
+    "build:only": "tsc -b",
+    "gcp-build": "npm run build",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
