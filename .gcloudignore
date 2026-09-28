@@ -35,6 +35,7 @@ apps/mobile/android/app/build/
 **/dist/
 **/build/
 artifacts/
+*.tsbuildinfo
 *.apk
 *.aab
 *.log
