@@ -12,7 +12,12 @@
     "node": ">=22.14.0"
   },
   "scripts": {
-    "build": "tsc -b",
+    "build": "npm run build:contracts && npm run build:domain && npm run build:db && npm run build:api",
+    "build:contracts": "npm run build --workspace @adaptive-labs/contracts",
+    "build:domain": "npm run build --workspace @adaptive-labs/domain",
+    "build:db": "npm run build --workspace @adaptive-labs/db",
+    "build:api": "npm run build --workspace @adaptive-labs/api",
+    "gcp-build": "npm run build",
     "typecheck": "npm run build && npm run typecheck --workspaces",
     "test": "npm run build && node --test services/api/dist/test/*.test.js",
     "start": "node --env-file-if-exists=.env services/api/dist/src/server.js",
