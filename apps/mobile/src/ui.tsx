@@ -1,25 +1,49 @@
-import type { PropsWithChildren, ReactNode } from "react";
-import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View, type TextInputProps } from "react-native";
+import { createContext, useCallback, useContext, useEffect, useRef, type PropsWithChildren, type ReactNode } from "react";
+import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View, type TextInputProps } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Pressable } from "./PointerPressable";
 
 export const C = { ink: "#0A214A", blue: "#1265F5", pale: "#EEF5FF", line: "#D8E2F0", muted: "#667995", green: "#11A875", red: "#CC334F" };
 
+const KeyboardScrollContext = createContext<() => void>(() => undefined);
+
+export function useRevealFocusedInput() {
+  return useContext(KeyboardScrollContext);
+}
+
 export function Screen({ children, footer }: PropsWithChildren<{ footer?: ReactNode }>) {
-  return <SafeAreaView style={s.safe} edges={["top", "right", "bottom", "left"]}>
-    <KeyboardAvoidingView style={s.root} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <ScrollView
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
-        contentInsetAdjustmentBehavior="never"
-        contentContainerStyle={s.scroll}
-      >
-        <View style={s.content}>{children}</View>
-      </ScrollView>
-      {footer ? <View style={s.footerFrame}><View style={s.footerContent}>{footer}</View></View> : null}
-    </KeyboardAvoidingView>
-  </SafeAreaView>;
+  const scrollRef = useRef<ScrollView>(null);
+  const revealFocusedInput = useCallback(() => {
+    requestAnimationFrame(() => {
+      const focusedInput = TextInput.State.currentlyFocusedInput();
+      if (focusedInput) scrollRef.current?.scrollResponderScrollNativeHandleToKeyboard(focusedInput, 24, true);
+    });
+  }, []);
+
+  useEffect(() => {
+    const subscription = Keyboard.addListener("keyboardDidShow", revealFocusedInput);
+    return () => subscription.remove();
+  }, [revealFocusedInput]);
+
+  return <KeyboardScrollContext.Provider value={revealFocusedInput}>
+    <SafeAreaView style={s.safe} edges={["top", "right", "bottom", "left"]}>
+      <KeyboardAvoidingView style={s.root} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+        <ScrollView
+          ref={scrollRef}
+          style={s.scroller}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
+          automaticallyAdjustKeyboardInsets={Platform.OS === "ios"}
+          contentInsetAdjustmentBehavior="never"
+          contentContainerStyle={s.scroll}
+        >
+          <View style={s.content}>{children}</View>
+        </ScrollView>
+        {footer ? <View style={s.footerFrame}><View style={s.footerContent}>{footer}</View></View> : null}
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  </KeyboardScrollContext.Provider>;
 }
 
 export function Brand({ compact = false }: { compact?: boolean }) {
@@ -35,7 +59,8 @@ export function Heading({ title, subtitle }: { title: ReactNode; subtitle?: stri
 }
 
 export function Field({ label, error, ...props }: TextInputProps & { label: string; error?: string }) {
-  return <View style={{ marginBottom: 15 }}><Text style={s.label}>{label}</Text><TextInput placeholderTextColor="#98A8BF" {...props} style={[s.input, props.multiline && s.textarea, error && s.inputError, props.style]} />{error ? <Text style={s.error}>{error}</Text> : null}</View>;
+  const revealFocusedInput = useRevealFocusedInput();
+  return <View style={{ marginBottom: 15 }}><Text style={s.label}>{label}</Text><TextInput placeholderTextColor="#98A8BF" {...props} onFocus={event => { props.onFocus?.(event); revealFocusedInput(); }} style={[s.input, props.multiline && s.textarea, error && s.inputError, props.style]} />{error ? <Text style={s.error}>{error}</Text> : null}</View>;
 }
 
 export function Choice({ title, detail, icon, selected, onPress }: { title: string; detail?: string; icon?: string; selected: boolean; onPress: () => void }) {
@@ -60,7 +85,7 @@ export function Footer({ primary, onPrimary, busy, secondary, onSecondary, disab
 }
 
 const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "#fff" }, root: { flex: 1 }, scroll: { paddingHorizontal: 22, paddingTop: 22, paddingBottom: 36, flexGrow: 1, alignItems: "center" }, content: { width: "100%", maxWidth: 760, flexGrow: 1 }, footerFrame: { width: "100%", alignItems: "center", backgroundColor: "white" }, footerContent: { width: "100%", maxWidth: 760 },
+  safe: { flex: 1, backgroundColor: "#fff" }, root: { flex: 1 }, scroller: { flex: 1 }, scroll: { paddingHorizontal: 22, paddingTop: 22, paddingBottom: 36, flexGrow: 1, alignItems: "center" }, content: { width: "100%", maxWidth: 760, flexGrow: 1 }, footerFrame: { width: "100%", flexShrink: 0, alignItems: "center", backgroundColor: "white" }, footerContent: { width: "100%", maxWidth: 760 },
   brand: { alignItems: "center", justifyContent: "center", marginVertical: 12 }, mark: { width: 66, height: 66, borderRadius: 22, alignItems: "center", justifyContent: "center" }, markText: { color: "white", fontWeight: "900", fontSize: 38 }, brandName: { color: C.ink, fontWeight: "900", fontSize: 25 }, tag: { color: C.muted, fontSize: 12, textAlign: "center", marginTop: 2 },
   progressRow: { flexDirection: "row", alignItems: "center", marginBottom: 28 }, backTop: { minWidth: 66, height: 36, borderRadius: 10, backgroundColor: "#F3F6FA", paddingHorizontal: 9, alignItems: "center", justifyContent: "center" }, backTopText: { color: C.ink, fontSize: 13, fontWeight: "800" }, dots: { flex: 1, flexDirection: "row", justifyContent: "center", gap: 5 }, dot: { width: 17, height: 4, borderRadius: 3, backgroundColor: "#D7DFEA" }, dotOn: { backgroundColor: C.blue }, step: { width: 66, textAlign: "right", color: C.muted, fontSize: 11, fontWeight: "600" },
   h1: { color: C.ink, fontWeight: "900", fontSize: 28, lineHeight: 33 }, subtitle: { color: C.muted, fontSize: 15, lineHeight: 21, marginTop: 6 }, label: { color: C.ink, fontSize: 14, fontWeight: "700", marginBottom: 7 }, input: { borderWidth: 1, borderColor: C.line, borderRadius: 12, height: 50, paddingHorizontal: 14, color: C.ink, backgroundColor: "white", fontSize: 15 }, textarea: { minHeight: 150, height: "auto", paddingTop: 14, textAlignVertical: "top" }, inputError: { borderColor: C.red }, error: { color: C.red, fontSize: 12, marginTop: 5 },

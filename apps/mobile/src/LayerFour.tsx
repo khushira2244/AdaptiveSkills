@@ -4,7 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { api } from "./api";
 import type { ContinuationState,LabState,LearningDoubt,LearningNote,LearningUnit,MarkedWord,UnitTeaching } from "./types";
 import { readerBlockChunks,codeBlockSize,canContinueConcept,restoredConceptSections,selectionContext } from "./teaching-reader";
-import { Brand,C,Field,Notice,PrimaryButton,Screen } from "./ui";
+import { Brand,C,Field,Notice,PrimaryButton,Screen,useRevealFocusedInput } from "./ui";
 import { Pressable } from "./PointerPressable";
 
 type Page="learn"|"unit"|"lab"|"notes"|"words"|"doubts";
@@ -203,7 +203,7 @@ function ActionChip({label,onPress,disabled}:{label:string;onPress:()=>void;disa
 
 function NoteEditor({visible,selectedText,note,busy,onChange,onClose,onSave}:{visible:boolean;selectedText:string;note:string;busy:boolean;onChange:(value:string)=>void;onClose:()=>void;onSave:()=>void}){
   return <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-    <KeyboardAvoidingView style={s.modalBackdrop} behavior={Platform.OS==="ios"?"padding":undefined}><SafeAreaView edges={["bottom","left","right"]} style={s.noteSheet}>
+    <KeyboardAvoidingView style={s.modalBackdrop} behavior={Platform.OS==="ios"?"padding":"height"}><SafeAreaView edges={["bottom","left","right"]} style={s.noteSheet}>
       <Text style={s.title}>Add note</Text><Text numberOfLines={3} style={s.selectedQuote}>“{selectedText}”</Text>
       <TextInput autoFocus multiline value={note} onChangeText={onChange} placeholder="Write your note" placeholderTextColor={C.muted} style={s.noteInput}/>
       <View style={s.noteActions}><Pressable onPress={onClose}><Text style={s.link}>Cancel</Text></Pressable><Pressable disabled={busy||!note.trim()} onPress={onSave}><Text style={s.link}>Save note</Text></Pressable></View>
@@ -296,11 +296,13 @@ function Lab({token,labId,onBack,onChanged}:{token:string;labId:string;onBack:()
 }
 
 function LabCodeEditor({value,disabled,onChange}:{value:string;disabled:boolean;onChange:(value:string)=>void}){
+  const revealFocusedInput=useRevealFocusedInput();
   return <TextInput
     accessibilityLabel="Editable code"
     value={value}
     onChangeText={onChange}
     editable={!disabled}
+    onFocus={revealFocusedInput}
     multiline
     scrollEnabled
     contextMenuHidden={false}
