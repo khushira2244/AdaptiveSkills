@@ -140,10 +140,10 @@ test("Layer 1 authenticated resumable onboarding", { timeout: 120000 }, async t 
     await save("POST","/me/resume",{ filename:"../escape.txt",mimeType:"text/plain",contentBase64:Buffer.from("Python").toString("base64") },400);
     assert.deepEqual(await call("GET","/me/onboarding"),before);
   });
-  await t.test("partial custom skills resume exactly after app recreation and re-login",async()=>{
+  await t.test("rated and unrated skills resume exactly and can advance without classification",async()=>{
     await save("PUT","/me/skills",{ skills:[
       { name:"Python",source:"CV_CONFIRMED",level:"AWARE",subskills:[] },
-      { name:"Custom distributed cache tuning",source:"MANUAL",level:"WORKING",subskills:[{ name:"Eviction",level:null }] },
+      { name:"Custom distributed cache tuning",source:"MANUAL",level:null,subskills:[{ name:"Eviction",level:null }] },
     ] });
     const before=structuredClone(state);
     await app.close();
@@ -154,13 +154,13 @@ test("Layer 1 authenticated resumable onboarding", { timeout: 120000 }, async t 
     assert.equal(state.currentStep,"skills");
     assert.deepEqual(state.skills.map(({ name,source,level })=>({ name,source,level })),[
       { name:"Python",source:"CV_CONFIRMED",level:"AWARE" },
-      { name:"Custom distributed cache tuning",source:"MANUAL",level:"WORKING" },
+      { name:"Custom distributed cache tuning",source:"MANUAL",level:null },
     ]);
     const session=await call("POST","/auth/login",{ email:"first@example.com",password },null);
     a={ ...a,...session };
     assert.deepEqual(await call("GET","/me/onboarding"),before);
-    await advanceInvalid();
-    async function advanceInvalid() { await save("POST","/me/onboarding/advance",{ step:"skills" },422); }
+    await advance("skills");
+    assert.equal(state.currentStep,"goal");
   });
   await t.test("stale and concurrent autosaves cannot overwrite newer data",async()=>{
     const version=state.version;
@@ -173,7 +173,6 @@ test("Layer 1 authenticated resumable onboarding", { timeout: 120000 }, async t 
     await call("PUT","/me/skills",payload,a.token,409);
     assert.equal(state.version,version+1);
     await save("PUT","/me/skills",{ skills:[{ name:"SQL",level:"WORKING",subskills:[] },{ name:"sql",level:null,subskills:[] }] },400);
-    await advance("skills");
   });
   await t.test("free-text goal, interests, pace and timeline round-trip",async()=>{
     await save("PUT","/me/goal",{ goal:{ target:"Build reliable AI applications for healthcare",reason:"Career transition" } });

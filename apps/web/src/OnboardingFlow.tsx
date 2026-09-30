@@ -7,12 +7,6 @@ import { readDocument } from "./documents";
 
 type View = "profile" | "resume" | "skills" | "goal" | "interests" | "preferences" | "review";
 const views: View[] = ["profile", "resume", "skills", "goal", "interests", "preferences", "review"];
-const levels = [
-  ["AWARE", "Beginner / basics", "Just started or know the basics"],
-  ["WORKING", "Intermediate", "Can use it and want more depth"],
-  ["PRODUCTION", "Advanced / confident", "Comfortable in real projects"],
-  ["DEEP", "Deep expertise", "Can diagnose and teach it"],
-] as const;
 const interestOptions = ["Healthcare", "Space & Aerospace", "Finance / Fintech", "Education", "Developer Tools", "Enterprise Software", "E-commerce", "Cybersecurity", "Automotive", "Robotics", "Media & Content", "Climate & Energy", "Government / Civic Tech", "Consumer Apps"];
 
 export function OnboardingFlow() {
@@ -109,13 +103,11 @@ function SkillsStep({ token, state, canonical, busy, error, setError, run, goNex
   const [name, setName] = useState("");
   function add() { const clean = name.trim(); if (!clean) return; if (skills.some(item => item.name.toLowerCase() === clean.toLowerCase())) return setError("That skill is already listed."); setSkills([...skills, { name: clean, source: "MANUAL", level: null, subskills: [] }]); setName(""); }
   async function save() {
-    if (skills.some(item => !item.level)) return setError("Choose a confidence level for every skill.");
     await run(async current => { let next = await api.skills(token, current, skills); if (canonical) next = await api.advance(token, next); return next; }, goNext);
   }
-  return <FlowCard title="Build your skill profile" detail="Keep resume skills, add anything missing, and choose your current confidence.">
-    <div className="inline-form"><Field label="Add a skill" value={name} onChange={setName} placeholder="e.g. TypeScript" onEnter={add} /><button type="button" className="secondary-button" onClick={add}>＋ Add skill</button></div>
-    <div className="skill-list">{skills.map((skill, index) => <article className="skill-row" key={`${skill.name}-${index}`}><div><strong>{skill.name}</strong><span>{skill.source === "CV_CONFIRMED" ? "From confirmed resume" : "Added manually"}</span></div><select aria-label={`${skill.name} confidence`} value={skill.level || ""} onChange={event => setSkills(skills.map((item, itemIndex) => itemIndex === index ? { ...item, level: event.target.value as Skill["level"] } : item))}><option value="">Choose level</option>{levels.map(([value, title]) => <option value={value} key={value}>{title}</option>)}</select><button type="button" className="icon-button" aria-label={`Remove ${skill.name}`} onClick={() => setSkills(skills.filter((_, itemIndex) => itemIndex !== index))}>×</button></article>)}</div>
-    {!skills.length ? <div className="empty-inline">Starting fresh is okay. Continue with no existing skills.</div> : null}
+  return <FlowCard title="Review your skills" detail={state.resume ? "We found these skills from your resume. Remove anything that does not belong and add anything we missed." : "Add the skills you already have. You can remove anything that does not belong and add anything we missed."}>
+    <section className="skill-review-card"><h2>Your skills</h2>{skills.length ? <div className="skill-review-list">{skills.map((skill, index) => <div className="skill-review-chip" key={`${skill.name}-${index}`}><span>{skill.name}</span><button type="button" aria-label={`Remove ${skill.name}`} onClick={() => setSkills(skills.filter((_, itemIndex) => itemIndex !== index))}>×</button></div>)}</div> : <div className="empty-inline">No skills added yet. Add any skills you want AdaptiveSkills to know about.</div>}</section>
+    <div className="inline-form"><Field label="Add a skill" value={name} onChange={setName} placeholder="e.g. TypeScript, CAD, Product research" onEnter={add} /><button type="button" className="secondary-button" onClick={add}>＋ Add skill</button></div>
     <FlowActions error={error} busy={busy} primary={canonical ? "Continue" : "Save changes"} onPrimary={() => void save()} />
   </FlowCard>;
 }

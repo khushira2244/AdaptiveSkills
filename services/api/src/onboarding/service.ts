@@ -2,12 +2,11 @@ import { onboardingRepository, withTransaction, type Database, type Transaction 
 import { onboardingStateSchema, onboardingSteps, type OnboardingState, type Profile, type Skill, type Goal, type Preferences } from "@adaptive-labs/contracts";
 import { HttpError } from "../http-error.js";
 
-function validateStep(state: OnboardingState, step: OnboardingState["currentStep"]) {
+export function validateStep(state: OnboardingState, step: OnboardingState["currentStep"]) {
   const missing =
     step === "profile" ? !state.profile.displayName :
     step === "role" ? !state.profile.currentRole :
     step === "experience" ? state.profile.experienceYears === null :
-    step === "skills" ? state.skills.some(s => !s.level || s.subskills.some(sub => !sub.level)) :
     step === "goal" ? !state.goal?.target :
     step === "preferences" ? !state.preferences.timelineDays || !state.preferences.pace : false;
   if (missing) throw new HttpError(422,"INCOMPLETE_STEP","Complete the " + step + " step before continuing");

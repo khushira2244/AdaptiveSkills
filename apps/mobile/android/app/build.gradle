@@ -120,6 +120,14 @@ android {
             def enablePngCrunchInRelease = findProperty('android.enablePngCrunchInReleaseBuilds') ?: 'true'
             crunchPngs enablePngCrunchInRelease.toBoolean()
         }
+        hackathonDebug {
+            // Standalone internal APK with debug-native dependencies. Keeping this
+            // variant debuggable allows RevenueCat Test Store keys for demos.
+            initWith debug
+            signingConfig signingConfigs.debug
+            debuggable true
+            matchingFallbacks = ['debug']
+        }
     }
     packagingOptions {
         jniLibs {

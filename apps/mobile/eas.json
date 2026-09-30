@@ -15,6 +15,14 @@
         "buildType": "apk"
       }
     },
+    "hackathon-apk": {
+      "distribution": "internal",
+      "environment": "production",
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleHackathonDebug"
+      }
+    },
     "ios-preview": {
       "distribution": "internal",
       "environment": "production",

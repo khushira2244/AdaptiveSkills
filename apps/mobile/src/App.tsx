@@ -1,8 +1,7 @@
 import { homeLabForUnit } from "./learning-navigation";
 import { Pressable } from "./PointerPressable";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Alert, ActivityIndicator, Animated, BackHandler, Image, Modal, PanResponder, ScrollView, StyleSheet, Text, View } from "react-native";
-import type { View as ViewType } from "react-native";
+import { Alert, ActivityIndicator, BackHandler, Image, Modal, ScrollView, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { StatusBar } from "expo-status-bar";
 import * as DocumentPicker from "expo-document-picker";
@@ -12,7 +11,7 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { api, ApiError, API_URL } from "./api";
 import { sessionStore } from "./session";
 import { loadRevenueCatOffer, purchaseRevenueCatPackage, restoreRevenueCatPurchases, revenueCatFailure, type StoreOffer } from "./revenuecat";
-import type { BillingState, ContinuationState, HomeState, LearningUnit, Level, OnboardingState, Pace, Skill, Step } from "./types";
+import type { BillingState, ContinuationState, HomeState, LearningUnit, OnboardingState, Pace, Skill, Step } from "./types";
 import { Brand, C, Chip, Choice, Field, Footer, Heading, Notice, PrimaryButton, Progress, Screen, styles as ui } from "./ui";
 import { LayerThree } from "./LayerThree";
 import { LayerFour } from "./LayerFour";
@@ -328,17 +327,10 @@ function resumeExtension(filename: string, mimeType: string) {
   return mimeType === "application/pdf" ? ".pdf" : mimeType === "text/plain" ? ".txt" : ".docx";
 }
 
-const levelInfo: { level: Level; title: string; detail: string; color: string; icon: string }[] = [
-  { level: "AWARE", title: "Beginner / basics", detail: "Just started or know the basics", color: "#FFF7E6", icon: "🎓" },
-  { level: "WORKING", title: "Intermediate", detail: "Can use it, want more depth", color: "#EEF7FF", icon: "📊" },
-  { level: "PRODUCTION", title: "Advanced / confident", detail: "Comfortable in real projects", color: "#EDFBF4", icon: "🏆" },
-  { level: "DEEP", title: "Deep expertise", detail: "Can diagnose and teach it", color: "#F4EFFF", icon: "💎" },
-];
 function SkillsScreen({ token, state, update, canonical, back }: Common) {
   const [skills, setSkills] = useState<Skill[]>(state.skills);
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false); const [error, setError] = useState("");
-  const bucketRefs = useRef<Partial<Record<Level, ViewType | null>>>({});
   async function persist(nextSkills: Skill[]) {
     setSkills(nextSkills); setBusy(true); setError("");
     try { const next = await api.skills(token, state, nextSkills); setSkills(next.skills); update(next, false); }
@@ -352,41 +344,17 @@ function SkillsScreen({ token, state, update, canonical, back }: Common) {
     setName("");
     void persist([...skills, { name: clean, source: "MANUAL", level: null, subskills: [] }]);
   }
-  function drop(skillName: string, pageX: number, pageY: number) {
-    for (const info of levelInfo) bucketRefs.current[info.level]?.measureInWindow((x, y, width, height) => {
-      if (pageX >= x && pageX <= x + width && pageY >= y && pageY <= y + height) {
-        const next = skills.map(skill => skill.name === skillName ? { ...skill, level: info.level } : skill);
-        void persist(next);
-      }
-    });
-  }
+  function remove(index: number) { void persist(skills.filter((_, itemIndex) => itemIndex !== index)); }
   async function save() {
-    if (skills.some(s => !s.level)) return setError("Drag every skill into a confidence level before continuing.");
     setBusy(true); setError(""); try { let next = await api.skills(token, state, skills); if (canonical) next = await api.advance(token, next); update(next); } catch (e) { await recover(e, token, update, setError); } finally { setBusy(false); }
   }
-  return <Frame step={3} back={back} footer={<Footer secondary={skills.length ? undefined : "I’m starting fresh"} onSecondary={() => void save()} primary={canonical ? "Continue" : "Save changes"} onPrimary={() => void save()} busy={busy} />}>
-    <Heading title="Build your skill profile" subtitle="Add your own skills, then place each at the level that matches you today." />
+  return <Frame step={3} back={back} footer={<Footer primary={canonical ? "Continue" : "Save changes"} onPrimary={() => void save()} busy={busy} />}>
+    <Heading title="Review your skills" subtitle={state.resume ? "We found these skills from your resume. Remove anything that does not belong and add anything we missed." : "Add the skills you already have. You can remove anything that does not belong and add anything we missed."} />
+    <View style={local.skillTray}><Text style={local.levelTitle}>Your skills</Text><View style={local.skillReviewList}>{skills.map((skill, index) => <View style={local.skillReviewChip} key={`${skill.name}-${index}`}><Text style={local.skillChipText}>{skill.name}</Text><Pressable accessibilityRole="button" accessibilityLabel={`Remove ${skill.name}`} onPress={() => remove(index)} hitSlop={8} style={local.skillRemove}><Text style={local.skillRemoveText}>×</Text></Pressable></View>)}</View>{!skills.length ? <Text style={local.empty}>No skills added yet. Add any skills you want AdaptiveSkills to know about.</Text> : null}</View>
     <Field label="Add a skill" value={name} onChangeText={setName} placeholder="e.g. TypeScript, CAD, Product research" returnKeyType="done" onSubmitEditing={add} />
     <Pressable onPress={add} style={local.add}><Text style={local.addText}>＋ Add skill</Text></Pressable>
-    <View style={local.skillTray}><Text style={local.levelTitle}>Your skills</Text><Text style={local.levelDetail}>Drag each skill into the level that matches you today.</Text><View style={local.wrap}>{skills.filter(skill => !skill.level).map(skill => <DraggableSkill key={skill.name} skill={skill} onDrop={drop} />)}{skills.every(skill => skill.level) ? <Text style={local.empty}>All skills have a confidence level</Text> : null}</View></View>
-    {levelInfo.map(info => <View ref={node => { bucketRefs.current[info.level] = node; }} key={info.level} style={[local.levelBox, { backgroundColor: info.color }]}><Text style={local.levelTitle}>{info.icon}  {info.title}</Text><Text style={local.levelDetail}>{info.detail}</Text><View style={local.wrap}>{skills.filter(s => s.level === info.level).map(skill => <DraggableSkill key={skill.name} skill={skill} onDrop={drop} />)}{skills.filter(s => s.level === info.level).length === 0 ? <Text style={local.empty}>Drop skills here</Text> : null}</View></View>)}
     {error ? <Notice tone="red">{error}</Notice> : null}
   </Frame>;
-}
-
-function DraggableSkill({ skill, onDrop }: { skill: Skill; onDrop: (name: string, pageX: number, pageY: number) => void }) {
-  const drag = useRef(new Animated.ValueXY()).current;
-  const responder = useRef(PanResponder.create({
-    onStartShouldSetPanResponder: () => true,
-    onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dx) + Math.abs(gesture.dy) > 4,
-    onPanResponderMove: Animated.event([null, { dx: drag.x, dy: drag.y }], { useNativeDriver: false }),
-    onPanResponderRelease: (_, gesture) => {
-      onDrop(skill.name, gesture.moveX, gesture.moveY);
-      Animated.spring(drag, { toValue: { x: 0, y: 0 }, useNativeDriver: false }).start();
-    },
-    onPanResponderTerminate: () => Animated.spring(drag, { toValue: { x: 0, y: 0 }, useNativeDriver: false }).start(),
-  })).current;
-  return <Animated.View {...responder.panHandlers} style={[local.skillChip, { transform: drag.getTranslateTransform() }]}><Text style={local.skillChipText}>{skill.name}</Text></Animated.View>;
 }
 
 function GoalScreen({ token, state, update, canonical, back }: Common) {
@@ -666,7 +634,7 @@ const local = StyleSheet.create({
   welcomeFooter: { padding: 22, borderTopWidth: 1, borderTopColor: "#E5ECF4", backgroundColor: "white", gap: 18 }, promise: { textAlign: "center", color: C.ink, fontWeight: "700" }, hero: { flex: 1, minHeight: 330, borderRadius: 24, overflow: "hidden", position: "relative", justifyContent: "flex-end" }, sun: { position: "absolute", width: 140, height: 140, borderRadius: 70, backgroundColor: "#FFF7CF", right: -28, top: -34 }, person: { position: "absolute", left: 35, bottom: 50, fontSize: 82, transform: [{ rotate: "-8deg" }] }, signs: { position: "absolute", right: 38, top: 80 }, sign: { backgroundColor: "#B9ECF4", color: C.ink, fontWeight: "800", paddingVertical: 9, paddingHorizontal: 28, marginBottom: 8, transform: [{ rotate: "-3deg" }] }, hills: { alignItems: "flex-end", opacity: .72 },
   authSwitch: { color: C.blue, textAlign: "center", fontWeight: "700", padding: 20 }, endpoint: { color: C.muted, textAlign: "center", fontSize: 11, marginTop: 20 },
   upload: { minHeight: 210, borderWidth: 1.5, borderStyle: "dashed", borderColor: "#8DB6FA", borderRadius: 15, backgroundColor: "#F8FBFF", alignItems: "center", justifyContent: "center", padding: 20 }, uploadTitle: { color: C.ink, fontWeight: "800", fontSize: 16, marginTop: 12, textAlign: "center" }, uploadHint: { color: C.muted, marginTop: 8, fontSize: 12 },
-  wrap: { flexDirection: "row", flexWrap: "wrap", alignItems: "center" }, add: { borderWidth: 1, borderColor: C.blue, borderRadius: 11, padding: 12, alignItems: "center", marginBottom: 18 }, addText: { color: C.blue, fontWeight: "800" }, skillTray: { borderWidth: 1, borderColor: "#C9DAF5", borderRadius: 14, padding: 14, marginBottom: 14, backgroundColor: "#F8FBFF" }, skillChip: { borderWidth: 1, borderColor: "#BFD2EE", backgroundColor: "white", borderRadius: 10, paddingVertical: 9, paddingHorizontal: 12, marginRight: 8, marginBottom: 8, zIndex: 10, elevation: 4 }, skillChipText: { color: C.ink, fontSize: 13, fontWeight: "800" }, levelBox: { borderWidth: 1, borderColor: "#DCE6F2", borderRadius: 14, padding: 14, marginBottom: 12, minHeight: 108 }, levelTitle: { color: C.ink, fontWeight: "900", fontSize: 15 }, levelDetail: { color: C.muted, fontSize: 12, marginTop: 3, marginBottom: 12 }, empty: { color: "#93A1B4", fontStyle: "italic", fontSize: 12 }, suggested: { color: C.ink, fontWeight: "800", marginVertical: 10 },
+  wrap: { flexDirection: "row", flexWrap: "wrap", alignItems: "center" }, add: { borderWidth: 1, borderColor: C.blue, borderRadius: 11, padding: 12, alignItems: "center", marginBottom: 18 }, addText: { color: C.blue, fontWeight: "800" }, skillTray: { borderWidth: 1, borderColor: "#C9DAF5", borderRadius: 14, padding: 14, marginBottom: 14, backgroundColor: "#F8FBFF" }, skillReviewList: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", marginTop: 12 }, skillReviewChip: { minHeight: 42, flexDirection: "row", alignItems: "center", borderWidth: 1, borderColor: "#BFD2EE", backgroundColor: "white", borderRadius: 10, paddingLeft: 12, marginRight: 8, marginBottom: 8 }, skillChipText: { color: C.ink, fontSize: 13, fontWeight: "800" }, skillRemove: { minWidth: 40, minHeight: 40, alignItems: "center", justifyContent: "center" }, skillRemoveText: { color: C.muted, fontSize: 21, lineHeight: 23, fontWeight: "600" }, levelTitle: { color: C.ink, fontWeight: "900", fontSize: 15 }, levelDetail: { color: C.muted, fontSize: 12, marginTop: 3, marginBottom: 12 }, empty: { color: "#76869C", fontSize: 12, lineHeight: 18, marginTop: 10 }, suggested: { color: C.ink, fontWeight: "800", marginVertical: 10 },
   counter: { textAlign: "right", color: C.muted, fontSize: 11, marginTop: -12, marginBottom: 15 }, grid: { flexDirection: "row", flexWrap: "wrap", gap: 9, marginBottom: 20 }, interest: { width: "31%", minHeight: 98, borderWidth: 1, borderColor: C.line, borderRadius: 13, alignItems: "center", justifyContent: "center", padding: 8, position: "relative" }, interestOn: { borderColor: C.blue, backgroundColor: "#EFF5FF", borderWidth: 2 }, interestIcon: { fontSize: 25, color: C.ink }, interestLabel: { color: C.ink, textAlign: "center", fontSize: 11, fontWeight: "800", marginTop: 7 }, check: { position: "absolute", right: 6, top: 4, color: C.blue, fontWeight: "900" },
   customTimeline: { flexDirection: "row", alignItems: "flex-start", gap: 12, marginTop: 8 },
   review: { borderWidth: 1, borderColor: C.line, borderRadius: 14, padding: 15, marginBottom: 10, flexDirection: "row", gap: 12 }, reviewTitle: { color: C.ink, fontWeight: "900", fontSize: 14 }, reviewValue: { color: C.muted, fontSize: 13, marginTop: 5, lineHeight: 18 }, edit: { color: C.blue, fontWeight: "800", fontSize: 12 },
