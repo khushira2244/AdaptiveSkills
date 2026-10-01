@@ -38,6 +38,7 @@ test("Android Back exits Home and leaves inner learning navigation to its screen
   assert.equal(appBackAction("home"),"EXIT");
   assert.equal(appBackAction("learning"),"DEFER");
   assert.equal(appBackAction("billing"),"PAID_HOME");
+  assert.equal(appBackAction("notes"),"PAID_HOME");
 });
 test("Teaching, unavailable state and absent lab IDs do not route to another lab",()=>{
   assert.equal(homeLabForUnit("unit-1",null),null);

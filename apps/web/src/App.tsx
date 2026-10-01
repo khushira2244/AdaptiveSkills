@@ -13,8 +13,6 @@ import { BillingPage,HelpPage,ProfilePage,SettingsPage } from "./AccountPages";
 type NavItem = { to: string; label: string; icon: string };
 const primaryNav: NavItem[] = [
   { to: "/home", label: "Home", icon: "⌂" },
-  { to: "/learn", label: "Learn", icon: "▤" },
-  { to: "/work", label: "My Work", icon: "▣" },
   { to: "/you", label: "You", icon: "♙" },
 ];
 const secondaryNav: NavItem[] = [

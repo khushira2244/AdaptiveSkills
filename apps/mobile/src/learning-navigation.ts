@@ -30,7 +30,7 @@ export function labContinueLabel(action:ContinuationState["nextAction"]):string{
 
 export function appBackAction(route:string):"EXIT"|"HOME"|"PAID_HOME"|"DEFER"{
   if(route==="home"||route==="paidHome")return "EXIT";
-  if(route==="billing"||route==="continuation")return "PAID_HOME";
+  if(route==="billing"||route==="continuation"||route==="notes")return "PAID_HOME";
   if(route==="payment")return "HOME";
   return "DEFER";
 }
