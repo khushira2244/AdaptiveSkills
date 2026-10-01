@@ -51,11 +51,9 @@ RevenueCat Test Store is used for hackathon purchase testing.
 ## Demo
 
 - **Live Web:** [adaptive-skills-web-na4j.vercel.app](https://adaptive-skills-web-na4j.vercel.app)
-- **Android APK:** [installable hackathon build on Expo EAS](https://expo.dev/accounts/adaptive-labs/projects/adaptive-skills/builds/39f3c608-2651-45e3-a1ba-4dc414c9061b)
-- **Demo Video:** [watch on YouTube](https://www.youtube.com/watch?v=uohbvnRHu-E)
+- **Android APK:** [download the installable Android build from Expo EAS](https://expo.dev/accounts/adaptive-labs/projects/adaptive-skills/builds/3f78e9ef-56fa-4165-a6c3-9bba61eb8b6a)
+- **Demo Video:** [watch the AdaptiveSkills demo on YouTube](https://youtu.be/QO217C8iUvc)
 - **GitHub:** [khushira2244/AdaptiveSkills](https://github.com/khushira2244/AdaptiveSkills)
-
-> The demo video link may be updated with the final recording before judging.
 
 ## Architecture
 
