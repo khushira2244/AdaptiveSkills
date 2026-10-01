@@ -1,3 +1,4 @@
+import type { LearningUnit } from "@adaptive-labs/contracts";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { Navigate, NavLink, Outlet, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { api } from "./api";
@@ -130,7 +131,17 @@ function Home() {
   const auth = useAuthenticated();
   const { onboarding, home } = auth;
   const navigate = useNavigate();
+  const [units, setUnits] = useState<LearningUnit[]>([]);
+  const [unitsLoading, setUnitsLoading] = useState(onboarding.completed);
+  useEffect(() => {
+    if (!onboarding.completed) { setUnits([]); setUnitsLoading(false); return; }
+    let active = true;
+    setUnitsLoading(true);
+    void api.learningUnits(auth.token).then(value => { if (active) setUnits(value); }).catch(() => { if (active) setUnits([]); }).finally(() => { if (active) setUnitsLoading(false); });
+    return () => { active = false; };
+  }, [auth.token, onboarding.completed]);
   const goal = onboarding.goal?.target || "Your learning goal";
+  const completedUnits = units.filter(unit => unit.status === "COMPLETE").sort((left, right) => left.sequence - right.sequence);
   const action = home?.primaryAction.type;
   const actionRoute = !onboarding.completed ? "/onboarding" : routeForAction(action);
   const actionLabel = !onboarding.completed ? "Resume setup" : actionButton(action);
@@ -142,15 +153,14 @@ function Home() {
     <section className="content-column">
       <div className="welcome-row"><div><span className="eyebrow">WELCOME BACK</span><h2>{onboarding.profile.displayName || "Learner"}</h2><p>Continue with the same saved learning state from any device.</p></div><div className="welcome-mark">✦</div></div>
       {!onboarding.completed ? <Notice><strong>Your profile setup is in progress.</strong><br />Continue from {readable(onboarding.currentStep)}. Your exact backend version is saved.</Notice> : null}
+      <section className="section-card"><div className="section-heading"><div><span className="eyebrow">CURRENT DIRECTION</span><h3>{goal}</h3></div><span className="personal-pill">✦ Just for you</span></div><div className="summary-grid"><Summary label="Current role" value={onboarding.profile.currentRole || "Not set"} /><Summary label="Timeline" value={onboarding.preferences.timelineDays ? `${onboarding.preferences.timelineDays} days` : "Not set"} /><Summary label="Pace" value={readable(onboarding.preferences.pace || "Not set")} /><Summary label="Skills saved" value={String(onboarding.skills.length)} /></div></section>
       <article className="primary-card">
-        <div className="card-icon">🚀</div><div className="card-copy"><span className="eyebrow">YOUR NEXT STEP</span><h3>{home ? actionTitle(home.primaryAction.type) : "Continue setup"}</h3><p>{home ? homeDescription(home.primaryAction.type, home.learningState || home.trial.status) : "Finish your learner setup to prepare your learning path."}</p></div>
+        <div className="card-icon">🚀</div><div className="card-copy"><span className="eyebrow">WHAT'S NEXT</span><h3>{home ? actionTitle(home.primaryAction.type) : "Continue setup"}</h3><p>{home ? homeDescription(home.primaryAction.type, home.learningState || home.trial.status) : "Finish your learner setup to prepare your learning path."}</p></div>
         <button className="primary-button compact" onClick={() => void primaryAction()}>{actionLabel}<span>→</span></button>
       </article>
-      <section className="section-card"><div className="section-heading"><div><span className="eyebrow">CURRENT DIRECTION</span><h3>{goal}</h3></div><span className="personal-pill">✦ Just for you</span></div><div className="summary-grid"><Summary label="Current role" value={onboarding.profile.currentRole || "Not set"} /><Summary label="Timeline" value={onboarding.preferences.timelineDays ? `${onboarding.preferences.timelineDays} days` : "Not set"} /><Summary label="Pace" value={readable(onboarding.preferences.pace || "Not set")} /><Summary label="Skills saved" value={String(onboarding.skills.length)} /></div></section>
     </section>
     <aside className="context-column">
-      <section className="context-card"><span className="eyebrow">ACCESS</span><h3>{accessLabel(home?.trial.status)}</h3><p>{home ? `Backend state: ${readable(home.learningState || home.state)}.` : "Your access state will appear after onboarding is complete."}</p><NavLink to="/billing" className="inline-link">View billing →</NavLink></section>
-      <section className="context-card"><span className="eyebrow">SYNCED ACCOUNT</span><h3>One learning record</h3><p>Profile, progress, notes, evidence, and continuation state stay owned by the existing backend.</p></section>
+      <section className="context-card completed-units-card"><span className="eyebrow">LEARNING HISTORY</span><h3>Completed units</h3>{unitsLoading ? <p>Loading your completed units…</p> : completedUnits.length ? <div className="completed-unit-list">{completedUnits.map(unit => <NavLink key={unit.unitId} to={`/learn?unit=${encodeURIComponent(unit.unitId)}`} className="completed-unit-link"><span className="completed-unit-number">✓</span><span><strong>Unit {unit.sequence}: {unit.title}</strong><small>{unit.concepts.length} concepts completed</small></span><b>›</b></NavLink>)}</div> : <p>Your completed units will stay here for review as you progress.</p>}</section>
     </aside>
   </div>;
 }

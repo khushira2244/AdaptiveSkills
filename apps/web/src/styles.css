@@ -98,6 +98,14 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .summary span { color: var(--muted); font-size: 11px; }
 .summary strong { min-width: 0; overflow-wrap: anywhere; font-size: 14px; }
 .context-card { padding: 22px; }
+.completed-unit-list { margin-top: 16px; display: grid; }
+.completed-unit-link { min-width: 0; padding: 14px 0; display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 10px; align-items: center; color: var(--ink); border-top: 1px solid #edf1f6; text-decoration: none; }
+.completed-unit-link:hover strong { color: var(--blue); }
+.completed-unit-number { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; color: #087c55; background: #e1f7ed; font-size: 11px; font-weight: 900; }
+.completed-unit-link strong, .completed-unit-link small { display: block; overflow-wrap: anywhere; }
+.completed-unit-link strong { font-size: 12px; line-height: 1.4; }
+.completed-unit-link small { margin-top: 4px; color: var(--muted); font-size: 10px; }
+.completed-unit-link b { color: var(--blue); font-size: 20px; }
 .inline-link { color: var(--blue); display: inline-block; margin-top: 15px; font-size: 13px; font-weight: 800; text-decoration: none; }
 .page-card { max-width: 1040px; min-height: 520px; padding: clamp(25px, 4vw, 44px); }
 .page-card h2 { margin: 9px 0; font-size: 34px; }
