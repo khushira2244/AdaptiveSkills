@@ -1,4 +1,4 @@
-import { homeLabForUnit } from "./learning-navigation";
+import { appBackAction,unitStatusLabel } from "./learning-navigation";
 import { Pressable } from "./PointerPressable";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Alert, ActivityIndicator, BackHandler, Image, Modal, ScrollView, StyleSheet, Text, View } from "react-native";
@@ -39,6 +39,7 @@ function AppContent() {
   const [homeState, setHomeState] = useState<HomeState | null>(null);
   const [learningLabId,setLearningLabId]=useState<string|null>(null);
   const [learningUnit,setLearningUnit]=useState<LearningUnit|null>(null);
+  const [learningPage,setLearningPage]=useState<"learn"|"work">("learn");
   const [storeOffer, setStoreOffer] = useState<StoreOffer | null>(null);
   const [offerError, setOfferError] = useState("");
   const [purchaseBusy, setPurchaseBusy] = useState(false);
@@ -71,6 +72,13 @@ function AppContent() {
   }
 
   useEffect(() => { void restore(); }, []);
+  useEffect(()=>{const subscription=BackHandler.addEventListener("hardwareBackPress",()=>{
+    const action=appBackAction(route);
+    if(action==="EXIT"){BackHandler.exitApp();return true;}
+    if(action==="PAID_HOME"){setRoute(homeState?.state==="TRIAL_PAID_SETUP_PENDING"?"paidHome":"home");return true;}
+    if(action==="HOME"){setRoute("home");return true;}
+    return false;
+  });return()=>subscription.remove();},[route,homeState?.state]);
 
   async function openHome(sessionToken: string) {
     const home = await api.home(sessionToken);
@@ -152,10 +160,10 @@ function AppContent() {
   if (route === "auth") return <Auth onAuthenticated={authenticated} onBack={() => setRoute("welcome")} />;
   if (route === "payment" && state && homeState) return <PaymentOffer state={state} price={storeOffer?.priceString} error={offerError} busy={purchaseBusy} onPurchase={() => void purchase()} onBack={() => setRoute("home")} />;
   if (route === "home" && state && homeState) return <Home state={state} pending={homeState.state === "PURCHASE_IN_PROGRESS"} price={storeOffer?.priceString} error={offerError} busy={purchaseBusy} onUnlock={() => setRoute("payment")} onRestore={() => void restorePurchase()} onBilling={() => setRoute("billing")} onLogout={() => void logout()} />;
-  if (route === "paidHome" && state && token && homeState) return <PaidHome token={token} state={state} home={homeState} onContinue={() => {void (async()=>{if(homeState.primaryAction.type==="CONTINUE_TRIAL_SETUP")return setRoute("layer3");const continuation=await api.continuation(token);if(continuation.nextAction==="REVIEW_NEXT_RUNWAY")await api.analyzeContinuation(token);if(continuation.nextAction==="REVIEW_NEXT_RUNWAY"||continuation.nextAction==="VIEW_NEXT_RUNWAY")return setRoute("continuation");setLearningUnit(null);setRoute("learning");})().catch(error=>setBootError(message(error)));}} onOpenLab={labId=>{setLearningUnit(null);setLearningLabId(labId);setRoute("learning");}} onOpenUnit={unit=>{setLearningLabId(null);setLearningUnit(unit);setRoute("learning");}} onBilling={() => setRoute("billing")} onLogout={() => void logout()} />;
+  if (route === "paidHome" && state && token && homeState) return <PaidHome token={token} state={state} home={homeState} onLearn={()=>{setLearningPage("learn");setLearningUnit(null);setLearningLabId(null);setRoute("learning");}} onWork={()=>{setLearningPage("work");setLearningUnit(null);setLearningLabId(null);setRoute("learning");}} onContinue={() => {void (async()=>{if(homeState.primaryAction.type==="CONTINUE_TRIAL_SETUP")return setRoute("layer3");const continuation=await api.continuation(token);if(continuation.nextAction==="REVIEW_NEXT_RUNWAY"){await api.analyzeContinuation(token);return setRoute("continuation");}if(continuation.nextAction==="VIEW_NEXT_RUNWAY")return setRoute("continuation");setLearningPage("learn");setLearningUnit(null);setRoute("learning");})().catch(error=>setBootError(message(error)));}} onOpenLab={labId=>{setLearningPage("learn");setLearningUnit(null);setLearningLabId(labId);setRoute("learning");}} onOpenUnit={unit=>{setLearningPage("learn");setLearningLabId(null);setLearningUnit(unit);setRoute("learning");}} onBilling={() => setRoute("billing")} onLogout={() => void logout()} />;
   if(route==="continuation"&&token&&homeState)return <ContinuationOffer token={token} appUserId={homeState.revenueCat.appUserId} onBack={()=>setRoute("paidHome")} onSuccess={()=>openHome(token)}/>;
   if (route === "layer3" && token) return <LayerThree token={token} onHome={() => setRoute("paidHome")} onLearn={() => setRoute("learning")} />;
-  if (route === "learning" && token) return <LayerFour token={token} initialUnit={learningUnit} initialLabId={learningLabId} onHome={() => {setLearningLabId(null);setLearningUnit(null);setRoute("paidHome");}} />;
+  if (route === "learning" && token) return <LayerFour token={token} initialPage={learningPage} initialUnit={learningUnit} initialLabId={learningLabId} onContinuation={()=>{void api.continuation(token).then(async continuation=>{if(continuation.nextAction==="REVIEW_NEXT_RUNWAY")await api.analyzeContinuation(token);setRoute("continuation");}).catch(error=>setBootError(message(error)));}} onHome={() => {setLearningLabId(null);setLearningUnit(null);setRoute("paidHome");}} />;
   if (route === "billing" && token) return <Billing token={token} onBack={() => void openHome(token)} />;
   if (route === "onboarding" && token && state) return <Onboarding token={token} initial={state} onBack={() => setRoute("welcome")} onState={setState} onComplete={next => { setState(next); api.home(token).then(home => { setHomeState(home); setRoute("payment"); }).catch(error => setBootError(message(error))); }} />;
   return <Splash error="Your session could not be loaded." retry={() => void restore()} />;
@@ -513,7 +521,7 @@ function ContinuationOffer({token,appUserId,onBack,onSuccess}:{token:string;appU
   return <Screen><View style={local.offerTop}><Pressable onPress={onBack} style={ui.backTop}><Text style={ui.backTopText}>‹</Text></Pressable><Brand compact/><View style={{width:32}}/></View><Text style={local.greeting}>Continue your learning</Text><Text style={local.greetingSub}>Your trial is complete. Continue with the next personalized runway prepared from your progress and evidence.</Text>{busy&&!state?<ActivityIndicator color={C.blue}/>:null}{state?.nextOffer?<View style={local.homePlanCard}><Text style={local.planTitle}>Next runway</Text><Text style={local.planCopy}>{state.nextOffer.plannedUnits} learning units · {state.nextOffer.plannedLabs} practical labs</Text><Text style={local.planCopy}>Detailed teaching is prepared progressively, one unit at a time.</Text>{error?<Notice tone="red">{error}</Notice>:null}<PrimaryButton label={offer?`Continue with ${offer.priceString}`:"Loading store price…"} disabled={!offer||busy} busy={busy} onPress={()=>void purchase()}/><Pressable onPress={()=>void restoreGrowth()} disabled={busy}><Text style={local.previewText}>Restore purchase</Text></Pressable></View>:error?<Notice tone="red">{error}</Notice>:null}</Screen>;
 }
 
-function PaidHome({ token, state, home, onContinue, onOpenUnit, onOpenLab, onBilling, onLogout }: { token: string; state: OnboardingState; home:HomeState; onContinue: () => void; onOpenUnit:(unit:LearningUnit)=>void; onOpenLab:(labId:string)=>void; onBilling: () => void; onLogout: () => void }) {
+function PaidHome({ token, state, home, onLearn,onWork, onContinue, onOpenUnit, onOpenLab, onBilling, onLogout }: { token: string; state: OnboardingState; home:HomeState; onLearn:()=>void;onWork:()=>void; onContinue: () => void; onOpenUnit:(unit:LearningUnit)=>void; onOpenLab:(labId:string)=>void; onBilling: () => void; onLogout: () => void }) {
   const [continuation,setContinuation]=useState<import("./types").ContinuationState|null>(null);
   const [units,setUnits]=useState<LearningUnit[]>([]);
   const [unitsLoading,setUnitsLoading]=useState(true);
@@ -530,7 +538,7 @@ function PaidHome({ token, state, home, onContinue, onOpenUnit, onOpenLab, onBil
   },[token]);
   const learningReady=units.length>0||Boolean(home.learningState&&home.primaryAction.type!=="CONTINUE_TRIAL_SETUP");
   const activeAction=continuation?.nextAction??home.primaryAction.type;
-  const currentUnit=units.find(unit=>unit.unitId===continuation?.nextUnitId)??units[0]??null;
+  const currentUnit=units.find(unit=>unit.unitId===continuation?.nextUnitId)??units.find(unit=>unit.status!=="COMPLETE"&&unit.status!=="LOCKED")??units[0]??null;
   const labAction=activeAction==="START_LAB"||activeAction==="RESUME_LAB";
   const actionLabel=activeAction==="DOUBT_CLEARANCE"?"Open Doubt Clearance":activeAction==="START_LAB"?"Start lab":activeAction==="RESUME_LAB"?"Resume lab":"Continue learning";
   const actionTitle=activeAction==="DOUBT_CLEARANCE"?"Clear your learning doubts":activeAction==="START_LAB"?"Start your practical lab":activeAction==="RESUME_LAB"?"Resume your practical lab":"Continue your learning";
@@ -538,7 +546,7 @@ function PaidHome({ token, state, home, onContinue, onOpenUnit, onOpenLab, onBil
   const openCurrent=()=>{if(["REVIEW_NEXT_RUNWAY","VIEW_NEXT_RUNWAY","WAIT_REFRESH"].includes(activeAction))onContinue();else if(labAction&&continuation?.nextLabId)onOpenLab(continuation.nextLabId);else if(currentUnit)onOpenUnit(currentUnit);else onContinue();};
   const visibleUnits=pathExpanded?units:(currentUnit?[currentUnit]:units.slice(0,1));
   async function openNotes(){setDrawerPage("notes");setNotesLoading(true);try{setSavedNotes(await api.notes(token));}finally{setNotesLoading(false);}}
-  return <View style={local.homeRoot}><Screen footer={<View style={local.tabBar}><Tab icon="⌂" label="Home" active/><Tab icon="▤" label="Learn"/><Tab icon="▣" label="My Work"/><Tab icon="♙" label="You"/></View>}>
+  return <View style={local.homeRoot}><Screen footer={<View style={local.tabBar}><Tab icon="⌂" label="Home" active/><Tab icon="▤" label="Learn" onPress={onLearn}/><Tab icon="▣" label="My Work" onPress={onWork}/><Tab icon="♙" label="You"/></View>}>
     <View style={local.homeHeader}><Pressable accessibilityLabel="Open menu" onPress={()=>{setDrawerPage("menu");setDrawerOpen(true);}}><Text style={local.headerIcon}>☰</Text></Pressable><Brand compact /><Pressable accessibilityLabel="Notifications" onPress={()=>Alert.alert("Notifications","You have no new notifications.")}><Text style={local.notificationIcon}>🔔</Text><View style={local.notificationDot}/></Pressable></View>
     <View style={local.paidGreeting}><View style={{ flex: 1 }}><View style={local.unlockedPill}><Text style={local.unlockedText}>●  {learningReady?"Trial active":"Trial unlocked"}</Text></View><Text style={[local.greeting,{marginTop:10}]}>Welcome back, {state.profile.displayName || "learner"} 👋</Text><Text style={local.greetingSub}>{learningReady?"Ready to keep learning?":`Aspiring ${state.profile.currentRole || "Learner"}`}</Text></View><Text style={local.personAvatar}>{learningReady?"🙋🏻‍♀️":"👩🏻"}</Text></View>
     {unitsLoading?<View style={local.homeLoading}><ActivityIndicator color={C.blue}/><Text style={local.greetingSub}>Loading your saved learning path…</Text></View>:learningReady?<>
@@ -548,7 +556,7 @@ function PaidHome({ token, state, home, onContinue, onOpenUnit, onOpenLab, onBil
       </View>
       <View style={local.learningStatusCard}>
         <View style={local.setupHeading}><Text style={local.setupTitle}>{continuation?.commercialProductKey==="TRY_IT"?"Your trial learning path":"Your learning path"}</Text><Text style={local.forYou}>✦ Just for you</Text></View>
-        {visibleUnits.map(unit=><Pressable key={unit.unitId} onPress={()=>{const labId=homeLabForUnit(unit.unitId,continuation);if(labId)onOpenLab(labId);else onOpenUnit(unit);}} style={local.learningUnitRow}><View style={local.learningUnitNumber}><Text style={local.learningUnitNumberText}>{unit.sequence}</Text></View><View style={{flex:1}}><Text style={local.rowTitle}>{unit.title}</Text><Text style={local.rowDetail} numberOfLines={2}>{unit.goal}</Text><Text style={local.learningMeta}>{unit.unitId===currentUnit?.unitId?"Current · ":""}{unit.concepts.length} concepts · practical lab included</Text></View><Text style={local.learningChevron}>›</Text></Pressable>)}
+        {visibleUnits.map(unit=><Pressable key={unit.unitId} disabled={unit.status==="LOCKED"} onPress={()=>onOpenUnit(unit)} style={[local.learningUnitRow,unit.status==="LOCKED"&&{opacity:.55}]}><View style={local.learningUnitNumber}><Text style={local.learningUnitNumberText}>{unit.sequence}</Text></View><View style={{flex:1}}><Text style={local.rowTitle}>{unit.title}</Text><Text style={local.rowDetail} numberOfLines={2}>{unit.goal}</Text><Text style={local.learningMeta}>{unitStatusLabel(unit.status)} · {unit.concepts.length} concepts · practical lab included</Text></View><Text style={local.learningChevron}>›</Text></Pressable>)}
         {units.length>1?<Pressable accessibilityRole="button" onPress={()=>setPathExpanded(value=>!value)} style={{minHeight:42,alignItems:"center",justifyContent:"center",borderTopWidth:1,borderTopColor:"#EDF1F6",marginTop:4}}><Text style={{color:C.blue,fontSize:12,fontWeight:"800"}}>{pathExpanded?"Show current unit only":`View all ${units.length} units`}  {pathExpanded?"↑":"↓"}</Text></Pressable>:null}
       </View>
     </>:<>
@@ -597,8 +605,9 @@ function SetupRow({ title, detail, done }: { title: string; detail: string; done
 function PreviewRow({ icon, title, detail }: { icon: string; title: string; detail: string }) { return <View style={local.previewRow}><View style={local.previewIcon}><Text style={{ color: C.blue, fontWeight: "900" }}>{icon}</Text></View><View style={{ flex: 1 }}><Text style={local.rowTitle}>{title}</Text><Text style={local.rowDetail}>{detail}</Text></View></View>; }
 function formatBillingAmount(amount: number | null, currency: string | null) { if (amount === null) return "Store price"; try { return new Intl.NumberFormat(undefined, { style: "currency", currency: currency || "USD", maximumFractionDigits: 2 }).format(amount); } catch { return `${currency || ""} ${amount}`.trim(); } }
 
-function Tab({ icon, label, active = false }: { icon: string; label: string; active?: boolean }) {
-  return <View style={local.tab}><Text style={[local.tabIcon, active && { color: C.blue }]}>{icon}</Text><Text style={[local.tabLabel, active && { color: C.blue, fontWeight: "800" }]}>{label}</Text></View>;
+function Tab({ icon, label, active = false,onPress }: { icon: string; label: string; active?: boolean;onPress?:()=>void }) {
+  const content=<><Text style={[local.tabIcon, active && { color: C.blue }]}>{icon}</Text><Text style={[local.tabLabel, active && { color: C.blue, fontWeight: "800" }]}>{label}</Text></>;
+  return onPress?<Pressable accessibilityRole="button" onPress={onPress} style={local.tab}>{content}</Pressable>:<View style={local.tab}>{content}</View>;
 }
 
 function SummaryRow({ icon, label, value }: { icon: string; label: string; value: string }) {

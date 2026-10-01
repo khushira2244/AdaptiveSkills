@@ -47,6 +47,7 @@ export type LearningUnit = {
   sequence: number;
   title: string;
   goal: string;
+  status: "LOCKED" | "READY" | "IN_PROGRESS" | "DOUBT_CHECKPOINT" | "COMPLETE";
   prerequisites: string[];
   productContext: string;
   groupingReason: string;
@@ -61,7 +62,9 @@ export type ContinuationState = { runwayId:string; commercialProductKey:"TRY_IT"
 export type LearningNote = { noteId:string; sourceType:string; sourceId:string|null; unitId:string|null; conceptId:string|null; labId:string|null; selectedText:string|null; body:string; createdAt:string; updatedAt:string };
 export type MarkedWord = { markedWordId:string; selectedText:string; simpleMeaning:string; technicalMeaning:string; sourceContext:string|null; learnerStatus:"I_KNOW_THIS"|"DONT_UNDERSTAND"|"GO_DEEPER"; unitId:string|null; conceptId:string|null; labId:string|null };
 export type LearningDoubt={doubtId:string;sourceText:string;markerType:"DONT_UNDERSTAND"|"GO_DEEPER";status:string;resolutionType:"EXPLAIN_AT_CHECKPOINT"|"MERGE_INTO_NEXT_UNIT"|null;unitId:string|null;conceptName:string|null;unitTitle:string|null;context:{explanation?:string;recap?:string[]}|null};
-export type LabState = { labId:string; unitId:string; title:string; status:string; context:Record<string,unknown>; attemptId:string|null; hintsUsed:number|null; systemAssistanceUsed:boolean|null; hints:{fileId:string|null;hintNumber:1|2;hint:string;createdAt:string}[]; files:{fileId:string;path:string;role:"PROVIDED"|"READ_ONLY"|"YOU_BUILD"|"OPTIONAL_REFERENCE"|"TEST";content:string|null;draft:string|null;version:number|null;savedAt:string|null;humanMeaning:string|null;technicalRole:string|null;inputOutput:string|null;learningPurpose:string|null}[] };
+export type LabCompletion={attemptId:string;attemptStatus:"IN_PROGRESS"|"SUBMITTED"|"COMPLETE";highestAssistanceLevel:string;hintsUsed:number;systemAssistanceUsed:boolean;run:{runId:string;status:"PASSED"|"FAILED"|"ERROR";result:Record<string,unknown>;createdAt:string}|null;submission:{submissionId:string;completed:boolean;evaluation:Record<string,unknown>;createdAt:string}|null;evidence:{evidenceId:string;conceptId:string|null;conceptName:string|null;assistanceLevel:string;outcome:"DEMONSTRATED"|"PARTIAL"|"NOT_DEMONSTRATED";details:Record<string,unknown>;createdAt:string}[]};
+export type LabState = { labId:string; unitId:string; title:string; status:"LOCKED"|"READY"|"IN_PROGRESS"|"COMPLETE"; context:Record<string,unknown>; attemptId:string|null; hintsUsed:number|null; systemAssistanceUsed:boolean|null; nextAction:ContinuationState["nextAction"]; concepts:{conceptId:string;name:string}[]; hints:{fileId:string|null;hintNumber:1|2;hint:string;createdAt:string}[]; files:{fileId:string;path:string;role:"PROVIDED"|"READ_ONLY"|"YOU_BUILD"|"OPTIONAL_REFERENCE"|"TEST";content:string|null;draft:string|null;version:number|null;savedAt:string|null;humanMeaning:string|null;technicalRole:string|null;inputOutput:string|null;learningPurpose:string|null}[]; completion:LabCompletion|null };
+export type LabWorkSummary={labId:string;unitId:string;unitTitle:string;title:string;status:"LOCKED"|"READY"|"IN_PROGRESS"|"COMPLETE";updatedAt:string;attempt:{attemptId:string;status:"IN_PROGRESS"|"SUBMITTED"|"COMPLETE";hintsUsed:number;systemAssistanceUsed:boolean;startedAt:string;completedAt:string|null}|null;submission:{submissionId:string;completed:boolean;evaluation:Record<string,unknown>;createdAt:string}|null;evidence:{demonstrated:number;partial:number;notDemonstrated:number}};
 
 export type LearningConcept = {
   conceptId: string;

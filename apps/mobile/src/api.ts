@@ -1,5 +1,5 @@
 import { Platform } from "react-native";
-import type { BillingState, ContinuationState, HomeState, LabState, LearningDoubt, LearningNote, LearningUnit, MarkedWord, OnboardingState, PaidSetupState, PurchaseIntent, Session, Skill, UnitTeaching } from "./types";
+import type { BillingState, ContinuationState, HomeState, LabState, LabWorkSummary, LearningDoubt, LearningNote, LearningUnit, MarkedWord, OnboardingState, PaidSetupState, PurchaseIntent, Session, Skill, UnitTeaching } from "./types";
 
 const developmentUrl = Platform.OS === "android" ? "http://10.0.2.2:3000" : "http://127.0.0.1:3000";
 const configuredUrl = process.env.EXPO_PUBLIC_API_URL?.trim();
@@ -51,6 +51,7 @@ export const api = {
   home: (token: string) => request<HomeState>("/me/home", {}, token),
   billing: (token: string) => request<BillingState>("/me/billing", {}, token),
   learningUnits: (token: string) => request<LearningUnit[]>("/me/learning-units", {}, token),
+  labHistory: (token: string) => request<LabWorkSummary[]>("/me/labs", {}, token),
   startPaidSetup: (token: string) => request<PaidSetupState>("/me/paid-setup/start", { method: "POST", body: "{}" }, token),
   paidSetup: (token: string) => request<PaidSetupState>("/me/paid-setup", {}, token),
   savePaidContext: (token: string, state: PaidSetupState, context: { jdText: string | null; targetCompany: string | null; productStyle: string | null;targetDepth:"BASIC"|"STANDARD"|"DEEP" }) => request<PaidSetupState>("/me/paid-setup/context", { method: "PUT", body: JSON.stringify({ revision: state.revision, ...context }) }, token),
@@ -73,6 +74,7 @@ export const api = {
   resolveDoubt:(token:string,doubtId:string)=>request<{resolved:true}>(`/me/learning-doubts/${doubtId}/resolve`,{method:"POST",body:"{}"},token),
   completeLearningUnit: (token:string,unitId:string) => request<{checkpoint:string;labId:string}>(`/me/learning-units/${unitId}/complete`,{method:"POST",body:"{}"},token),
   openUnitTeaching:(token:string,unitId:string)=>request<UnitTeaching>(`/me/learning-units/${unitId}/teaching/open`,{method:"POST",body:"{}"},token),
+  unitTeaching:(token:string,unitId:string)=>request<UnitTeaching>(`/me/learning-units/${unitId}/teaching`,{},token),
   saveLessonProgress:(token:string,lessonId:string,lastBlockPosition:number,completed:boolean)=>request<{saved:true}>(`/me/concept-lessons/${lessonId}/progress`,{method:"PUT",body:JSON.stringify({lastBlockPosition,completed})},token),
   startLab: (token:string,labId:string) => request<{attemptId:string}>(`/me/labs/${labId}/start`,{method:"POST",body:"{}"},token),
   lab: (token:string,labId:string) => request<LabState>(`/me/labs/${labId}`,{},token),
