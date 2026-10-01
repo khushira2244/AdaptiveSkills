@@ -170,7 +170,7 @@ function CenteredState({ title, detail, busy = false, action, onAction }: { titl
 }
 
 function Brand({ compact = false }: { compact?: boolean }) {
-  return <div className={`brand ${compact ? "compact" : ""}`}><div className="brand-mark">A</div><div><strong>Adaptive<span>Skills</span></strong><small>Learn. Build. Grow.</small></div></div>;
+  return <div className={`brand ${compact ? "compact" : ""}`}><img className="brand-mark" src="/adaptive-skills-logo.png" alt="" aria-hidden="true" /><div><strong>Adaptive<span>Skills</span></strong><small>Learn. Build. Grow.</small></div></div>;
 }
 
 function useAuthenticated() {

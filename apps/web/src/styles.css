@@ -22,12 +22,12 @@ button { cursor: pointer; }
 button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, summary:focus-visible { outline: 3px solid rgba(18, 101, 245, .28); outline-offset: 2px; }
 
 .brand { display: flex; align-items: center; gap: 14px; }
-.brand-mark { width: 52px; height: 52px; display: grid; place-items: center; border-radius: 17px; color: #fff; font-size: 27px; font-weight: 900; background: linear-gradient(145deg, #1eb7e8, #1768f5 52%, #7a38e8); }
+.brand-mark { width: 52px; height: 52px; display: block; flex: 0 0 auto; border-radius: 15px; object-fit: cover; }
 .brand strong { display: block; color: var(--ink); font-size: 25px; line-height: 1; font-weight: 900; }
 .brand strong span { color: #2778f5; }
 .brand small { display: block; color: var(--muted); margin-top: 6px; font-size: 11px; }
 .brand.compact { gap: 10px; }
-.brand.compact .brand-mark { width: 40px; height: 40px; border-radius: 13px; font-size: 21px; }
+.brand.compact .brand-mark { width: 40px; height: 40px; border-radius: 12px; }
 .brand.compact strong { font-size: 20px; }
 .brand.compact small { margin-top: 4px; font-size: 9px; }
 
