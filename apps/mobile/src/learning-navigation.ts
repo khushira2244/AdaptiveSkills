@@ -24,7 +24,7 @@ export function shouldGenerateTeaching(status:LearningUnit["status"],readStatus:
 
 export function labContinueLabel(action:ContinuationState["nextAction"]):string{
   if(action==="DOUBT_CLEARANCE")return "Continue to doubt clearance";
-  if(action==="REVIEW_NEXT_RUNWAY"||action==="VIEW_NEXT_RUNWAY")return "Continue learning";
+  if(action==="REVIEW_NEXT_RUNWAY"||action==="VIEW_NEXT_RUNWAY")return "Return to Home";
   return "Continue to next unit";
 }
 

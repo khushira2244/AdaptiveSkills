@@ -1,5 +1,7 @@
 # Layer 2 backend: Home, commerce and RevenueCat
 
+> Historical implementation checkpoint. See the current [commerce documentation](../commerce-revenuecat.md).
+
 The backend treats PostgreSQL as the application entitlement source of truth. The mobile RevenueCat SDK presents store products and localized prices; it never sends a trusted `isPaid` flag.
 
 ## Environment

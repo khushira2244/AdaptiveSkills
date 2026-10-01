@@ -1,5 +1,7 @@
 # AdaptiveSkills native app
 
+For the canonical platform guide, see [docs/mobile.md](../../docs/mobile.md).
+
 `apps/mobile` is the shared Expo/React Native client for Android, iPhone, and iPad. All platforms use the existing AdaptiveSkills API as the source of truth for authentication, onboarding, learning scope, progress, teaching, labs, notes, evidence, entitlements, and continuation state.
 
 ## Platform support
@@ -53,7 +55,7 @@ npm run mobile:start
 - iOS simulator API: `http://127.0.0.1:3000`.
 - Physical devices require a LAN-accessible development API or deployed HTTPS API.
 
-## Android production APK
+## Android builds
 
 Run EAS from this directory so it loads `apps/mobile/eas.json`:
 
@@ -62,7 +64,13 @@ cd apps/mobile
 npx --yes eas-cli@latest build --platform android --profile production-apk
 ```
 
-The latest final APK build is [available on EAS](https://expo.dev/accounts/adaptive-labs/projects/adaptive-skills/builds/01250f6f-c016-4629-8b17-e7112160f49c).
+The hackathon Test Store APK uses the separate `hackathon-apk` profile:
+
+```powershell
+npx --yes eas-cli@latest build --platform android --profile hackathon-apk
+```
+
+The judge-ready hackathon APK is [available on EAS](https://expo.dev/accounts/adaptive-labs/projects/adaptive-skills/builds/39f3c608-2651-45e3-a1ba-4dc414c9061b).
 
 ## iPhone and iPad builds
 

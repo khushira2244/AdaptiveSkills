@@ -1,5 +1,7 @@
 # Layer 1 API contract
 
+> Historical implementation checkpoint. See the current [backend documentation](../backend.md).
+
 Local base URL: http://127.0.0.1:3000. JSON requests/responses.
 Shared schemas: packages/contracts/src/onboarding.ts.
 

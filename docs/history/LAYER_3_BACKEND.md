@@ -1,5 +1,7 @@
 # Layer 3 backend: paid setup to trial-ready learning units
 
+> Historical implementation checkpoint. See the current [learning-engine documentation](../learning-engine.md).
+
 Layer 3 starts only for an authenticated learner with completed onboarding and an active, server-verified RevenueCat entitlement. It keeps the existing Layer 2 commerce state as the purchase source of truth and stores learning setup in its own revisioned workflow.
 
 ## State machine

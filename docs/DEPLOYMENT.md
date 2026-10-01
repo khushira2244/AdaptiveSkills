@@ -1,141 +1,65 @@
-# AdaptiveSkills deployment guide
+# Deployment
 
-AdaptiveSkills is one product delivered through three clients. Android, iPhone/iPad, and web call the same Fastify API and resume the same PostgreSQL-backed learner state.
+AdaptiveSkills deploys one backend, one static web workspace, and native clients that share the backend-owned learner state.
 
 ## Production inventory
 
-| Component | Production target |
+| Component | Target |
 | --- | --- |
-| Android | Expo EAS internal-distribution APK |
-| iPhone/iPad | Expo/EAS iOS client; Apple signing is required for device distribution |
-| Web | Vercel static Vite application |
-| API | Google Cloud Run: `adaptiveskills-api` in `asia-south1` |
+| API | Cloud Run service `adaptiveskills-api`, region `asia-south1` |
+| API URL | `https://adaptiveskills-api-236264514374.asia-south1.run.app` |
 | Database | Cloud SQL for PostgreSQL |
-| Access | RevenueCat Test Store for the hackathon build |
-
-Production API:
-
-```text
-https://adaptiveskills-api-236264514374.asia-south1.run.app
-```
-
-Production web app:
-
-```text
-https://adaptive-skills-web-na4j.vercel.app
-```
+| Web | Vercel at `https://adaptive-skills-web-na4j.vercel.app` |
+| Native | Expo EAS |
+| Hackathon commerce | RevenueCat Test Store |
 
 ## Environment boundaries
 
-### Native public configuration
+Mobile may contain only `EXPO_PUBLIC_API_URL` and the public `EXPO_PUBLIC_REVENUECAT_API_KEY`. Web may contain only `VITE_API_URL`. Server values such as `DATABASE_URL`, `AUTH_SECRET`, `OPENAI_API_KEY`, `REVENUECAT_SECRET_API_KEY`, and `REVENUECAT_WEBHOOK_AUTH_TOKEN` belong in Google Secret Manager.
 
-Configured in the EAS `production` environment:
+Cloud Run also needs the configured RevenueCat identifiers, OpenAI model settings, `WEB_ORIGINS`, and any resume storage configuration. Use `.env.example` as the variable contract and never copy real secret values into documentation or a client environment.
 
-```text
-EXPO_PUBLIC_API_URL
-EXPO_PUBLIC_REVENUECAT_API_KEY
+## Cloud Run and Cloud SQL
+
+Source deployments must run from the repository root so the npm workspaces and lockfile are included:
+
+```powershell
+gcloud run deploy adaptiveskills-api --source . --project intentbridge --region asia-south1 --allow-unauthenticated --add-cloudsql-instances intentbridge:asia-south1:adaptiveskills-postgres
 ```
 
-These values are bundled into the app and must remain safe for clients.
+The service listens on Cloud Run's `PORT`. `DATABASE_URL` can use the attached Cloud SQL Unix socket. The revision service account needs Secret Manager Secret Accessor on every referenced secret and Cloud SQL Client on the instance.
 
-### Web public configuration
+Run production migrations through the existing one-off job:
 
-Configured in Vercel:
-
-```text
-VITE_API_URL
+```powershell
+gcloud run jobs execute adaptiveskills-migrate --project intentbridge --region asia-south1 --wait
 ```
 
-### API server configuration
+The job uses the same Cloud SQL attachment and `DATABASE_URL`, then runs `npm run db:migrate`. Review job output before sending traffic to a schema-dependent revision.
 
-Cloud Run owns database, authentication, OpenAI, RevenueCat server, webhook, model, and CORS configuration. Secret values must come from Secret Manager and must never use `EXPO_PUBLIC_*` or `VITE_*` names.
+Set `WEB_ORIGINS` to the exact allowed HTTPS Vercel origins. After deployment:
 
-See [`.env.example`](../.env.example) for the complete variable contract without real credentials.
+```powershell
+Invoke-RestMethod https://adaptiveskills-api-236264514374.asia-south1.run.app/health
+```
 
-## Android APK
+## Vercel
 
-Run the build from `apps/mobile`, where the EAS profiles live:
+Import the repository root. Root `vercel.json` defines `npm run web:build`, output `apps/web/dist`, SPA routing, and response headers. Configure:
+
+```text
+VITE_API_URL=https://adaptiveskills-api-236264514374.asia-south1.run.app
+```
+
+## Android and iOS
+
+Run EAS from `apps/mobile`:
 
 ```powershell
 cd apps/mobile
+npx --yes eas-cli@latest build --platform android --profile hackathon-apk
 npx --yes eas-cli@latest build --platform android --profile production-apk
-```
-
-The `production-apk` profile uses the EAS `production` environment and emits an installable APK. The final verified build is:
-
-```text
-01250f6f-c016-4629-8b17-e7112160f49c
-```
-
-Build page: [Expo EAS](https://expo.dev/accounts/adaptive-labs/projects/adaptive-skills/builds/01250f6f-c016-4629-8b17-e7112160f49c)
-
-## iPhone and iPad
-
-The Expo configuration uses bundle ID `com.adaptivelabs.adaptiveskills`, enables iPad support, keeps iPhone in portrait, and allows iPad portrait and landscape orientations.
-
-For an EAS device preview:
-
-```powershell
-cd apps/mobile
 npx --yes eas-cli@latest build --platform ios --profile ios-preview
 ```
 
-For an iOS simulator build:
-
-```powershell
-cd apps/mobile
-npx --yes eas-cli@latest build --platform ios --profile ios-simulator
-```
-
-Installing a simulator build and running local Xcode validation require macOS. Physical-device distribution requires Apple signing credentials and registered device provisioning.
-
-## Web and Vercel
-
-Build from the repository root:
-
-```powershell
-npm run web:build
-```
-
-Vercel settings:
-
-| Setting | Value |
-| --- | --- |
-| Root Directory | Repository root |
-| Framework | Vite |
-| Build command | `npm run web:build` |
-| Output directory | `apps/web/dist` |
-| Environment | `VITE_API_URL=https://adaptiveskills-api-236264514374.asia-south1.run.app` |
-
-The root [`vercel.json`](../vercel.json) provides SPA routing and security headers. Cloud Run `WEB_ORIGINS` must contain each exact deployed Vercel origin that is allowed to call authenticated API routes.
-
-## API and database
-
-The Cloud Run source deployment starts from the repository root because the root build orders shared packages before the API:
-
-```text
-contracts → domain → db → api
-```
-
-Cloud Run must attach the existing Cloud SQL instance and inject server secrets from Secret Manager. Production migrations run through the dedicated migration job using:
-
-```powershell
-npm run db:migrate
-```
-
-Do not run migrations from a mobile or web client.
-
-## Release verification
-
-```powershell
-npm run typecheck
-npm test
-npm run test:db
-npm run mobile:typecheck
-npm run mobile:test
-npm run web:typecheck
-npm run web:test
-npm run web:build
-```
-
-Before distributing a native build, confirm its bundle contains the production Cloud Run URL and does not contain emulator API URLs or server secrets. Before promoting web, confirm login, session restore, `/home`, teaching, labs, and saved state work with the same account used on mobile.
+Use `hackathon-apk` for the RevenueCat Test Store demonstration. It is an installable debug build that still uses the EAS production environment. Keep `production-apk` unchanged for the release APK path. iOS device builds require Apple signing and provisioning; simulator installation and local Xcode checks require macOS.

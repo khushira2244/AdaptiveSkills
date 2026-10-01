@@ -1,5 +1,7 @@
 # Part 1 completion report
 
+> Historical implementation checkpoint. See the current [architecture](../architecture.md) and [backend](../backend.md) documentation.
+
 Status: PASS
 
 ## Implemented

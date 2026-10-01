@@ -1,5 +1,7 @@
 # AdaptiveSkills web workspace
 
+For the canonical web guide, see [docs/web.md](../../docs/web.md).
+
 The web client is a desktop workspace for the existing AdaptiveSkills product. It uses the same Cloud Run API, bearer sessions, learner records, and backend-owned progression state as mobile.
 
 **Production:** [adaptive-skills-web-na4j.vercel.app](https://adaptive-skills-web-na4j.vercel.app)

@@ -267,12 +267,10 @@ export class LearningSetupService {
   }
   async saveLessonProgress(id:string,lessonId:string,input:{lastBlockPosition:number;completed:boolean}){const own=await this.pool.query(`SELECT 1 FROM concept_lessons l JOIN learning_units u USING(unit_id) WHERE l.lesson_id=$1 AND u.learner_id=$2`,[lessonId,id]);if(!own.rowCount)throw new HttpError(404,"LESSON_NOT_FOUND","Concept lesson not found");await this.pool.query(`INSERT INTO learner_lesson_progress(learner_id,lesson_id,last_block_position,completed,completed_at) VALUES($1,$2,$3,$4,CASE WHEN $4 THEN now() END) ON CONFLICT(learner_id,lesson_id) DO UPDATE SET last_block_position=GREATEST(learner_lesson_progress.last_block_position,$3),completed=learner_lesson_progress.completed OR $4,completed_at=CASE WHEN learner_lesson_progress.completed OR $4 THEN COALESCE(learner_lesson_progress.completed_at,now()) END,updated_at=now()`,[id,lessonId,input.lastBlockPosition,input.completed]);return{saved:true};}
   async readLearningUnits(id:string){
-    const runway=await this.pool.query<{runwayId:string}>(`SELECT runway_id "runwayId" FROM learning_runways WHERE learner_id=$1 AND status IN ('ACTIVE','CURRENT_RUNWAY_COMPLETE','NEXT_RUNWAY_PROPOSED','NEXT_RUNWAY_AWAITING_PURCHASE','NEXT_RUNWAY_PURCHASED','NEXT_RUNWAY_READY','NEXT_RUNWAY_GENERATION_FAILED') ORDER BY created_at DESC LIMIT 1`,[id]);
-    if(!runway.rows[0])return[];
-    return (await this.pool.query<any>(`SELECT u.unit_id "unitId",ru.position sequence,u.title,u.goal,ru.status,u.prerequisites,u.product_context "productContext",u.grouping_reason "groupingReason",u.lab_outcome_placeholder "labOutcomePlaceholder",
+    return (await this.pool.query<any>(`SELECT u.unit_id "unitId",row_number() OVER(ORDER BY lr.created_at,ru.position)::int sequence,u.title,u.goal,ru.status,u.prerequisites,u.product_context "productContext",u.grouping_reason "groupingReason",u.lab_outcome_placeholder "labOutcomePlaceholder",
       COALESCE(jsonb_agg(jsonb_build_object('conceptId',c.concept_id,'name',c.name) ORDER BY uc.position) FILTER(WHERE c.concept_id IS NOT NULL),'[]') concepts
-      FROM learning_runway_units ru JOIN learning_units u USING(unit_id) LEFT JOIN learning_unit_concepts uc USING(unit_id) LEFT JOIN concepts c USING(concept_id)
-      WHERE ru.runway_id=$1 AND u.learner_id=$2 GROUP BY u.unit_id,ru.position,ru.status ORDER BY ru.position`,[runway.rows[0].runwayId,id])).rows;
+      FROM learning_runway_units ru JOIN learning_runways lr USING(runway_id) JOIN learning_units u USING(unit_id) LEFT JOIN learning_unit_concepts uc USING(unit_id) LEFT JOIN concepts c USING(concept_id)
+      WHERE lr.learner_id=$1 AND u.learner_id=$1 GROUP BY u.unit_id,lr.created_at,ru.position,ru.status ORDER BY lr.created_at,ru.position`,[id])).rows;
   }
   async read(id:string) {
     const context=await this.pool.query<ContextRow>(`SELECT learner_id "learnerId",goal_id "goalId",revision,status,jd_text "jdText",target_company "targetCompany",product_style "productStyle",target_depth "targetDepth",failure_code "failureCode",target_path "targetPath" FROM paid_setup_contexts WHERE learner_id=$1`,[id]);

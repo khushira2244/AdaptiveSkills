@@ -1,5 +1,7 @@
 # Part 2 — Database foundation
 
+> Historical implementation checkpoint. See the current [backend documentation](../backend.md).
+
 Status: PASS
 
 ## Changes

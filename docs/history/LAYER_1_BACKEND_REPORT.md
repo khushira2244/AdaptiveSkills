@@ -1,5 +1,7 @@
 # Layer 1 backend completion report
 
+> Historical implementation checkpoint. See the current [backend documentation](../backend.md).
+
 Backend scope: PASS. Full React Native vertical slice: PENDING frontend/device verification.
 
 ## Delivered behavior
