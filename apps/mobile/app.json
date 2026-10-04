@@ -3,6 +3,7 @@
     "name": "AdaptiveSkills",
     "slug": "adaptive-skills",
     "version": "1.0.0",
+    "icon": "./assets/adaptive-skills-logo.png",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "ios": {
@@ -20,8 +21,9 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/splash.png",
-          "resizeMode": "cover",
+          "image": "./assets/adaptive-skills-logo.png",
+          "imageWidth": 220,
+          "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
       ],

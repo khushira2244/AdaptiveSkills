@@ -171,7 +171,7 @@ function AppContent() {
 }
 
 function Splash({ error, retry }: { error: string; retry: () => void }) {
-  return <View style={local.splash}><Image source={require("../assets/splash.png")} resizeMode="cover" style={StyleSheet.absoluteFill} />{error ? <View style={local.splashError}><Notice tone="red">{error}</Notice><PrimaryButton label="Try again" onPress={retry} /></View> : null}</View>;
+  return <View style={local.splash}><Image source={require("../assets/adaptive-skills-logo.png")} resizeMode="contain" style={local.splashLogo} />{error ? <View style={local.splashError}><Notice tone="red">{error}</Notice><PrimaryButton label="Try again" onPress={retry} /></View> : null}</View>;
 }
 
 function Welcome({ onStart }: { onStart: () => void }) {
@@ -666,7 +666,7 @@ function message(error: unknown) { return error instanceof Error ? error.message
 function toggle(values: string[], item: string) { return values.includes(item) ? values.filter(x => x !== item) : [...values, item]; }
 
 const local = StyleSheet.create({
-  splash: { flex: 1, backgroundColor: "white" }, splashError: { position: "absolute", left: 24, right: 24, bottom: 48, backgroundColor: "white", padding: 12, borderRadius: 16 },
+  splash: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "white" }, splashLogo: { width: "58%", maxWidth: 360, aspectRatio: 1 }, splashError: { position: "absolute", left: 24, right: 24, bottom: 48, backgroundColor: "white", padding: 12, borderRadius: 16 },
   welcomeFooter: { padding: 22, borderTopWidth: 1, borderTopColor: "#E5ECF4", backgroundColor: "white", gap: 18 }, promise: { textAlign: "center", color: C.ink, fontWeight: "700" }, hero: { flex: 1, minHeight: 330, borderRadius: 24, overflow: "hidden", position: "relative", justifyContent: "flex-end" }, sun: { position: "absolute", width: 140, height: 140, borderRadius: 70, backgroundColor: "#FFF7CF", right: -28, top: -34 }, person: { position: "absolute", left: 35, bottom: 50, fontSize: 82, transform: [{ rotate: "-8deg" }] }, signs: { position: "absolute", right: 38, top: 80 }, sign: { backgroundColor: "#B9ECF4", color: C.ink, fontWeight: "800", paddingVertical: 9, paddingHorizontal: 28, marginBottom: 8, transform: [{ rotate: "-3deg" }] }, hills: { alignItems: "flex-end", opacity: .72 },
   authSwitch: { color: C.blue, textAlign: "center", fontWeight: "700", padding: 20 }, endpoint: { color: C.muted, textAlign: "center", fontSize: 11, marginTop: 20 },
   upload: { minHeight: 210, borderWidth: 1.5, borderStyle: "dashed", borderColor: "#8DB6FA", borderRadius: 15, backgroundColor: "#F8FBFF", alignItems: "center", justifyContent: "center", padding: 20 }, uploadTitle: { color: C.ink, fontWeight: "800", fontSize: 16, marginTop: 12, textAlign: "center" }, uploadHint: { color: C.muted, marginTop: 8, fontSize: 12 },

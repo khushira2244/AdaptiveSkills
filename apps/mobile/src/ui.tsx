@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useRef, type PropsWithChildren, type ReactNode } from "react";
-import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View, type TextInputProps } from "react-native";
+import { ActivityIndicator, Image, Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View, type TextInputProps } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Pressable } from "./PointerPressable";
@@ -47,7 +47,7 @@ export function Screen({ children, footer }: PropsWithChildren<{ footer?: ReactN
 }
 
 export function Brand({ compact = false }: { compact?: boolean }) {
-  return <View style={[s.brand, compact && { flexDirection: "row", gap: 8 }]}><LinearGradient colors={["#1EB7E8", "#1768F5", "#7A38E8"]} style={[s.mark, compact && { width: 32, height: 32 }]}><Text style={[s.markText, compact && { fontSize: 17 }]}>A</Text></LinearGradient><View><Text style={[s.brandName, compact && { fontSize: 18 }]}>Adaptive<Text style={{ color: "#2778F5" }}>Skills</Text></Text><Text style={[s.tag, compact && { fontSize: 7, textAlign: "left", marginTop: 0 }]}>Learn. Build. Grow.</Text></View></View>;
+  return <View style={[s.brand, compact && { flexDirection: "row", gap: 8 }]}><Image accessibilityIgnoresInvertColors source={require("../assets/adaptive-skills-logo.png")} resizeMode="contain" style={[s.mark, compact && s.markCompact]} /><View><Text style={[s.brandName, compact && { fontSize: 18 }]}>Adaptive<Text style={{ color: "#2778F5" }}>Skills</Text></Text><Text style={[s.tag, compact && { fontSize: 7, textAlign: "left", marginTop: 0 }]}>Learn. Build. Grow.</Text></View></View>;
 }
 
 export function Progress({ step, total = 7, onBack }: { step: number; total?: number; onBack?: () => void }) {
@@ -86,7 +86,7 @@ export function Footer({ primary, onPrimary, busy, secondary, onSecondary, disab
 
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "#fff" }, root: { flex: 1 }, scroller: { flex: 1 }, scroll: { paddingHorizontal: 22, paddingTop: 22, paddingBottom: 36, flexGrow: 1, alignItems: "center" }, content: { width: "100%", maxWidth: 760, flexGrow: 1 }, footerFrame: { width: "100%", flexShrink: 0, alignItems: "center", backgroundColor: "white" }, footerContent: { width: "100%", maxWidth: 760 },
-  brand: { alignItems: "center", justifyContent: "center", marginVertical: 12 }, mark: { width: 66, height: 66, borderRadius: 22, alignItems: "center", justifyContent: "center" }, markText: { color: "white", fontWeight: "900", fontSize: 38 }, brandName: { color: C.ink, fontWeight: "900", fontSize: 25 }, tag: { color: C.muted, fontSize: 12, textAlign: "center", marginTop: 2 },
+  brand: { alignItems: "center", justifyContent: "center", marginVertical: 12 }, mark: { width: 66, height: 66, borderRadius: 17 }, markCompact: { width: 32, height: 32, borderRadius: 9 }, brandName: { color: C.ink, fontWeight: "900", fontSize: 25 }, tag: { color: C.muted, fontSize: 12, textAlign: "center", marginTop: 2 },
   progressRow: { flexDirection: "row", alignItems: "center", marginBottom: 28 }, backTop: { minWidth: 66, height: 36, borderRadius: 10, backgroundColor: "#F3F6FA", paddingHorizontal: 9, alignItems: "center", justifyContent: "center" }, backTopText: { color: C.ink, fontSize: 13, fontWeight: "800" }, dots: { flex: 1, flexDirection: "row", justifyContent: "center", gap: 5 }, dot: { width: 17, height: 4, borderRadius: 3, backgroundColor: "#D7DFEA" }, dotOn: { backgroundColor: C.blue }, step: { width: 66, textAlign: "right", color: C.muted, fontSize: 11, fontWeight: "600" },
   h1: { color: C.ink, fontWeight: "900", fontSize: 28, lineHeight: 33 }, subtitle: { color: C.muted, fontSize: 15, lineHeight: 21, marginTop: 6 }, label: { color: C.ink, fontSize: 14, fontWeight: "700", marginBottom: 7 }, input: { borderWidth: 1, borderColor: C.line, borderRadius: 12, height: 50, paddingHorizontal: 14, color: C.ink, backgroundColor: "white", fontSize: 15 }, textarea: { minHeight: 150, height: "auto", paddingTop: 14, textAlignVertical: "top" }, inputError: { borderColor: C.red }, error: { color: C.red, fontSize: 12, marginTop: 5 },
   choice: { flexDirection: "row", alignItems: "center", gap: 12, borderWidth: 1, borderColor: C.line, borderRadius: 13, padding: 14, marginBottom: 9, backgroundColor: "white" }, choiceOn: { borderColor: C.blue, backgroundColor: "#F4F8FF", borderWidth: 2 }, choiceIcon: { fontSize: 23, width: 29, textAlign: "center" }, choiceTitle: { color: C.ink, fontWeight: "800", fontSize: 15 }, choiceDetail: { color: C.muted, fontSize: 12, marginTop: 2 }, radio: { width: 21, height: 21, borderRadius: 11, borderWidth: 1.5, borderColor: C.line, alignItems: "center", justifyContent: "center" }, radioOn: { borderColor: C.blue, backgroundColor: C.blue },
